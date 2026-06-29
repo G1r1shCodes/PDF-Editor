@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(claude plugin *)",
+      "Read(//c/Program Files/Tesseract-OCR/**)",
+      "Bash(MSYS2_ARG_CONV_EXCL=\"*\" ./tesseract_installer.exe /S /D=C:\\\\Users\\\\DESKTOP\\\\Tesseract-OCR)",
+      "Bash(echo \"installer exit: $?\")",
+      "Read(//c/Users/DESKTOP/Tesseract-OCR/**)",
+      "Bash(MSYS2_ARG_CONV_EXCL=\"*\" cmd /c \"tesseract_installer.exe /S /D=C:\\\\Users\\\\DESKTOP\\\\Tesseract-OCR\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(\"/c/Users/DESKTOP/Tesseract-OCR/tesseract.exe\" --version)",
+      "Bash(MSYS2_ARG_CONV_EXCL=\"*\" cmd /c \"C:\\\\Users\\\\DESKTOP\\\\Downloads\\\\PDF Editor Tool\\\\tesseract_installer.exe /S /D=C:\\\\Users\\\\DESKTOP\\\\Tesseract-OCR\")",
+      "Bash(cp \"C:\\\\Users\\\\DESKTOP\\\\Downloads\\\\PDF Editor Tool\\\\tesseract_installer.exe\" /c/Users/DESKTOP/tess_setup.exe)",
+      "Bash(MSYS2_ARG_CONV_EXCL=\"*\" cmd /c \"C:\\\\Users\\\\DESKTOP\\\\tess_setup.exe /S /D=C:\\\\Users\\\\DESKTOP\\\\Tesseract-OCR\")",
+      "Bash(\"/c/Program Files/Tesseract-OCR/tesseract.exe\" --version)",
+      "Bash(netstat -ano)"
+    ]
+  }
+}
