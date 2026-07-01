@@ -1,0 +1,199 @@
+{
+  "pages": [
+    {
+      "page": 0,
+      "width": 612.0,
+      "height": 792.0,
+      "elements": [
+        {
+          "id": "p0_e0",
+          "type": "paragraph",
+          "text": "BANSAL POLYPLAST PRIVATE LIMITED PURCHASE ORDER\n[> Web Site: www.bansalpolyplast.com",
+          "bbox": {
+            "x": 51.6,
+            "y": 57.84,
+            "width": 458.16,
+            "height": 31.2
+          },
+          "font_size": 5.43,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e1",
+          "type": "paragraph",
+          "text": "Vendor KDI POWER PRIVATE LIMITED(K-3010-0)\nH-1243, DSIDC INDUSTRIAL AREA, NARELA, NORTH WEST DELHI, DELHI NORTH WEST\nState (Source of Supply): DELHI (India) Pincode: 110040\nGSTIN :\nName : VIPUL KUMAR | Contact No : 9205333843 | Contact Email : vipul@kdipower.com",
+          "bbox": {
+            "x": 20.4,
+            "y": 189.12,
+            "width": 556.8,
+            "height": 50.64
+          },
+          "font_size": 4.61,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e2",
+          "type": "paragraph",
+          "text": "Warehouse",
+          "bbox": {
+            "x": 20.4,
+            "y": 267.36,
+            "width": 38.88,
+            "height": 5.52
+          },
+          "font_size": 4.42,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e3",
+          "type": "table",
+          "text": "Billing Address |  |  | Shipping Address |  | \nBANSAL INDUSTRIAL GSTIN Contact Email: SP-272 State (Destination (I&J), : No.: 0O8AADCB448S5E2Z0 POLYPLAST H AREA, 1-508, of Supply) ALWAR, BANSAL PRIVATE : Rajsthan, ALWAR | POLYPLAST LIMITED 301030 PRIVATE | LIMITED-ALWAR, | BANSAL ALWAR, Email: INDUSTRIAL GSTIN Contact State (Destination (1&J), : No.: MATSYA POLYPLAST H AREA, 1-508, of Supply) ALWAR, BANSAL PRIVATE : Rajsthan, ALWAR POLYPLAST | LIMITED 301030 PRIVATE | LIMITED-",
+          "bbox": {
+            "x": 20.4,
+            "y": 281.76,
+            "width": 543.6,
+            "height": 91.92
+          },
+          "font_size": 4.95,
+          "bold": false,
+          "color": "#000000",
+          "rows": [
+            [
+              "Billing Address",
+              "",
+              "",
+              "Shipping Address",
+              "",
+              ""
+            ],
+            [
+              "BANSAL INDUSTRIAL GSTIN Contact Email: SP-272 State (Destination (I&J), : No.: 0O8AADCB448S5E2Z0 POLYPLAST H AREA, 1-508, of Supply) ALWAR, BANSAL PRIVATE : Rajsthan, ALWAR",
+              "POLYPLAST LIMITED 301030 PRIVATE",
+              "LIMITED-ALWAR,",
+              "BANSAL ALWAR, Email: INDUSTRIAL GSTIN Contact State (Destination (1&J), : No.: MATSYA POLYPLAST H AREA, 1-508, of Supply) ALWAR, BANSAL PRIVATE : Rajsthan, ALWAR POLYPLAST",
+              "LIMITED 301030 PRIVATE",
+              "LIMITED-"
+            ]
+          ],
+          "col_widths": [
+            99.91,
+            36,
+            179.75,
+            94.25,
+            37,
+            35.0
+          ],
+          "col_positions": [
+            82.09,
+            182,
+            218,
+            397.75,
+            492,
+            529
+          ]
+        },
+        {
+          "id": "p0_e4",
+          "type": "paragraph",
+          "text": "30 SQ MM ACSR CONDUCTOR (WEASEL) 76042910 10000 0% 000\nCode:",
+          "bbox": {
+            "x": 42.24,
+            "y": 413.04,
+            "width": 544.56,
+            "height": 17.28
+          },
+          "font_size": 4.71,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e5",
+          "type": "form_field",
+          "text": "Mfr:",
+          "bbox": {
+            "x": 42.24,
+            "y": 434.4,
+            "width": 14.4,
+            "height": 5.76
+          },
+          "font_size": 4.61,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e6",
+          "type": "paragraph",
+          "text": "Remark :Make: KDI POWER",
+          "bbox": {
+            "x": 42.24,
+            "y": 444.96,
+            "width": 97.2,
+            "height": 6.0
+          },
+          "font_size": 4.52,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e7",
+          "type": "paragraph",
+          "text": "irri\nrca inn",
+          "bbox": {
+            "x": 455.04,
+            "y": 466.8,
+            "width": 136.08,
+            "height": 63.84
+          },
+          "font_size": 25.24,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e8",
+          "type": "paragraph",
+          "text": "Total in words (INR) : Rupees Five Lakh Sixty Six Thousand Four Hundred Only\nTerms & Conditions",
+          "bbox": {
+            "x": 20.4,
+            "y": 527.04,
+            "width": 284.16,
+            "height": 19.92
+          },
+          "font_size": 4.52,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e9",
+          "type": "paragraph",
+          "text": "1. DEFINITION & ESSENCE 1. BANSAL POLYPLAST Pvt. Ltd. herein referred to as the Buyer/ Service Recipient and KDI Power Pvt. Ltd.\nreferred to as the\nSeller/ Service Provider and together as Parties.\n2. Supply of Goods and Services shall in all circumstances be strictly in accordance with Buyer's/ Service\nRecipient's specifications, Terms and Conditions.\n3. All Purchase Orders shall be strictly subject to Buyer's / Service Recipient's standard terms and conditions for\npurchase of goods/ services as mentioned below, unless specifically mentioned in the Purchase Order/ Work order",
+          "bbox": {
+            "x": 21.12,
+            "y": 555.12,
+            "width": 566.64,
+            "height": 69.36
+          },
+          "font_size": 4.61,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e10",
+          "type": "list",
+          "text": "2. PRICE BASIS Prices are in INR",
+          "bbox": {
+            "x": 20.4,
+            "y": 647.52,
+            "width": 254.64,
+            "height": 6.0
+          },
+          "font_size": 4.61,
+          "bold": false,
+          "color": "#000000"
+        }
+      ]
+    }
+  ]
+}

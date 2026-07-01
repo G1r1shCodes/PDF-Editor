@@ -1,0 +1,10 @@
+.git
+.claude
+__pycache__
+*.pyc
+node_modules
+venv
+tmp_pdf_editor
+mnt
+tesseract_installer.exe
+test.pdf

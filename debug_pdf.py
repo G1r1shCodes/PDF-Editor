@@ -3,7 +3,7 @@ import os
 import glob
 from pathlib import Path
 
-base_dir = Path('C:/Users/DESKTOP/Downloads/PDF Editor Tool/tmp_pdf_editor')
+base_dir = Path(__file__).resolve().parent / 'tmp_pdf_editor'
 latest_pdf = max(glob.glob(str(base_dir / '*' / 'original.pdf')), key=os.path.getmtime)
 print(f'Analyzing: {latest_pdf}')
 

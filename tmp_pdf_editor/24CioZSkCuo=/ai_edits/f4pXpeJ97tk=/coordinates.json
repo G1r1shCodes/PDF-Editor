@@ -1,0 +1,33 @@
+{
+  "dpi": 300,
+  "bbox_points": {
+    "x": 19.68,
+    "y": 205.44,
+    "width": 24.72,
+    "height": 11.76
+  },
+  "bbox_pixels": {
+    "x": 82,
+    "y": 856,
+    "width": 103,
+    "height": 49
+  },
+  "padding_points": 8.0,
+  "padding_pixels": 33,
+  "crop_box_pixels": {
+    "left": 49,
+    "top": 823,
+    "right": 218,
+    "bottom": 938,
+    "width": 169,
+    "height": 115
+  },
+  "page_image_pixels": {
+    "width": 2480,
+    "height": 3509
+  },
+  "session_id": "24CioZSkCuo=",
+  "page_number": 0,
+  "original_text": "KV,",
+  "replacement_text": "67890"
+}

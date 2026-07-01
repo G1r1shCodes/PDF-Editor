@@ -1,0 +1,25 @@
+{
+  "pages": [
+    {
+      "page": 0,
+      "width": 595.0,
+      "height": 842.0,
+      "elements": [
+        {
+          "id": "p0_e0",
+          "type": "paragraph",
+          "text": "Specification for XLPE cable for Woking voltage up to and including 1.1\nKV,IS:7098(Partt1)4 x44 00qq.m.((llmiiiiim\nS. Specification Name Bid Requirement\nNo.\n1 Conformity of the specification to As per IS:7098(part 1):1988 latest\nXLPE cable\n2 ISI marked Yes\n3 Cable suitable for use in mines No\n4 Cable suitable for use in low No.\ntemperature applications\n5 Nominal area of conductor (in sq.mm.) 400\n6 No.ofcore((in Nos))) 04\n7 Classifications of table for improved fire 01\nperformance category\n8 Type of cable Armoured cable\n9 Type of inner sheath Thermoplastic\n10 Material of armouring Galvanized steel formed wire\n11 Type of armouring Single Strip\n12 Material of conductor Aluminium\n13 Conductor material standard As per IS:8130:2013 latest\n14 Construction of Conductor Stranded and Shaped\n15 Cable wound on ISI marked wooden drum\n16 Drum standard IS:10418 Latest\n17 Type of sequential marking on cable Screen/Embossed printing on cable\n18 Availability of type test report from Yes\nGovt.lab/NABL accredited lab/ILAC\naccredited lab\n19 Availability of optional testing report Not applicable",
+          "bbox": {
+            "x": 15.81,
+            "y": 185.72,
+            "width": 524.06,
+            "height": 474.32
+          },
+          "font_size": 13.98,
+          "bold": false,
+          "color": "#666666"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "dpi": 300,
+  "bbox_points": {
+    "x": 262.08,
+    "y": 194.4,
+    "width": 45.36,
+    "height": 11.04
+  },
+  "bbox_pixels": {
+    "x": 1092,
+    "y": 810,
+    "width": 189,
+    "height": 46
+  },
+  "padding_points": 8.0,
+  "padding_pixels": 33,
+  "crop_box_pixels": {
+    "left": 1059,
+    "top": 777,
+    "right": 1314,
+    "bottom": 889,
+    "width": 255,
+    "height": 112
+  },
+  "page_image_pixels": {
+    "width": 2480,
+    "height": 3509
+  },
+  "session_id": "bNrw8jBsg3E=",
+  "page_number": 0,
+  "original_text": "Woking",
+  "replacement_text": "Working",
+  "context_text": "for voltage 400 sq.mm (aluminium Bid"
+}

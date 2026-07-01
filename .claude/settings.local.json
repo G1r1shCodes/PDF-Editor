@@ -14,7 +14,8 @@
       "Bash(cp \"C:\\\\Users\\\\DESKTOP\\\\Downloads\\\\PDF Editor Tool\\\\tesseract_installer.exe\" /c/Users/DESKTOP/tess_setup.exe)",
       "Bash(MSYS2_ARG_CONV_EXCL=\"*\" cmd /c \"C:\\\\Users\\\\DESKTOP\\\\tess_setup.exe /S /D=C:\\\\Users\\\\DESKTOP\\\\Tesseract-OCR\")",
       "Bash(\"/c/Program Files/Tesseract-OCR/tesseract.exe\" --version)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(venv/Scripts/python.exe -c ' *)"
     ]
   }
 }

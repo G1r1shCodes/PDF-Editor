@@ -1,0 +1,33 @@
+{
+  "dpi": 300,
+  "bbox_points": {
+    "x": 101.75999999999999,
+    "y": 85.44,
+    "width": 42.72,
+    "height": 15.12
+  },
+  "bbox_pixels": {
+    "x": 424,
+    "y": 356,
+    "width": 178,
+    "height": 63
+  },
+  "padding_points": 8.0,
+  "padding_pixels": 33,
+  "crop_box_pixels": {
+    "left": 391,
+    "top": 323,
+    "right": 635,
+    "bottom": 452,
+    "width": 244,
+    "height": 129
+  },
+  "page_image_pixels": {
+    "width": 2480,
+    "height": 3509
+  },
+  "session_id": "x6-Bpwo8Zrg=",
+  "page_number": 0,
+  "original_text": "Hello",
+  "replacement_text": "AI Replacer Text"
+}

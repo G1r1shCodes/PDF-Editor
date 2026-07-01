@@ -1,0 +1,33 @@
+{
+  "dpi": 300,
+  "bbox_points": {
+    "x": 325.2,
+    "y": 436.8,
+    "width": 55.44,
+    "height": 10.799999999999999
+  },
+  "bbox_pixels": {
+    "x": 1355,
+    "y": 1820,
+    "width": 231,
+    "height": 45
+  },
+  "padding_points": 8.0,
+  "padding_pixels": 33,
+  "crop_box_pixels": {
+    "left": 1322,
+    "top": 1787,
+    "right": 1619,
+    "bottom": 1898,
+    "width": 297,
+    "height": 111
+  },
+  "page_image_pixels": {
+    "width": 2480,
+    "height": 3509
+  },
+  "session_id": "Z1bDl5PMssE=",
+  "page_number": 0,
+  "original_text": "Armoured",
+  "replacement_text": "Girish"
+}

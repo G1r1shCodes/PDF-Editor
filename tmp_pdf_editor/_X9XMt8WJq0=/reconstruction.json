@@ -1,0 +1,407 @@
+{
+  "pages": [
+    {
+      "page": 0,
+      "width": 595.0,
+      "height": 842.0,
+      "elements": [
+        {
+          "id": "p0_e0",
+          "type": "paragraph",
+          "text": "KY, 18:7098 (Part-1",
+          "bbox": {
+            "x": 19.68,
+            "y": 205.44,
+            "width": 141.6,
+            "height": 16.8
+          },
+          "font_size": 9.41,
+          "bold": false,
+          "color": "#202020"
+        },
+        {
+          "id": "p0_e1",
+          "type": "paragraph",
+          "text": "Specifiention for XLPE cable for Woking voltage up to and including Lt\n4x 400 sq.mm (aluminium",
+          "bbox": {
+            "x": 20.88,
+            "y": 187.68,
+            "width": 522.0,
+            "height": 35.52
+          },
+          "font_size": 9.02,
+          "bold": false,
+          "color": "#1a1a1a"
+        },
+        {
+          "id": "p0_e2",
+          "type": "paragraph",
+          "text": "Specification Name\nNo.",
+          "bbox": {
+            "x": 19.68,
+            "y": 237.12,
+            "width": 156.24,
+            "height": 28.56
+          },
+          "font_size": 9.65,
+          "bold": false,
+          "color": "#2f2f2f"
+        },
+        {
+          "id": "p0_e3",
+          "type": "paragraph",
+          "text": "| Conformity of the specification for",
+          "bbox": {
+            "x": 43.68,
+            "y": 268.56,
+            "width": 246.0,
+            "height": 31.68
+          },
+          "font_size": 9.21,
+          "bold": false,
+          "color": "#4e4e4e"
+        },
+        {
+          "id": "p0_e4",
+          "type": "paragraph",
+          "text": "ALPE cable",
+          "bbox": {
+            "x": 59.28,
+            "y": 288.48,
+            "width": 68.16,
+            "height": 11.76
+          },
+          "font_size": 8.64,
+          "bold": false,
+          "color": "#444444"
+        },
+        {
+          "id": "p0_e5",
+          "type": "paragraph",
+          "text": "Bid Requirement",
+          "bbox": {
+            "x": 325.2,
+            "y": 245.04,
+            "width": 102.0,
+            "height": 12.72
+          },
+          "font_size": 9.03,
+          "bold": false,
+          "color": "#202020"
+        },
+        {
+          "id": "p0_e6",
+          "type": "paragraph",
+          "text": "As per 1):1988 latest",
+          "bbox": {
+            "x": 325.2,
+            "y": 274.56,
+            "width": 190.8,
+            "height": 13.92
+          },
+          "font_size": 7.87,
+          "bold": false,
+          "color": "#3d3d3d"
+        },
+        {
+          "id": "p0_e7",
+          "type": "paragraph",
+          "text": "marked Yes",
+          "bbox": {
+            "x": 80.16,
+            "y": 305.28,
+            "width": 265.92,
+            "height": 11.76
+          },
+          "font_size": 8.26,
+          "bold": false,
+          "color": "#464646"
+        },
+        {
+          "id": "p0_e8",
+          "type": "paragraph",
+          "text": "Cable suitable far use in mines",
+          "bbox": {
+            "x": 58.32,
+            "y": 321.12,
+            "width": 174.0,
+            "height": 12.72
+          },
+          "font_size": 7.87,
+          "bold": false,
+          "color": "#3b3b3b"
+        },
+        {
+          "id": "p0_e9",
+          "type": "paragraph",
+          "text": "temperature applications\nNominal W area of conductor fi",
+          "bbox": {
+            "x": 57.36,
+            "y": 353.76,
+            "width": 164.88,
+            "height": 31.68
+          },
+          "font_size": 9.26,
+          "bold": false,
+          "color": "#464646"
+        },
+        {
+          "id": "p0_e10",
+          "type": "header",
+          "text": "| 6 | No. (in Nos.",
+          "bbox": {
+            "x": 12.0,
+            "y": 381.36,
+            "width": 159.12,
+            "height": 18.48
+          },
+          "font_size": 12.67,
+          "bold": true,
+          "color": "#5c5c5c"
+        },
+        {
+          "id": "p0_e11",
+          "type": "paragraph",
+          "text": "performance\n| 8 | Type of cable\n| 9 | Type of inner sheath\nMaterial of anmourineg",
+          "bbox": {
+            "x": 12.0,
+            "y": 418.08,
+            "width": 170.88,
+            "height": 62.16
+          },
+          "font_size": 10.27,
+          "bold": false,
+          "color": "#535353"
+        },
+        {
+          "id": "p0_e12",
+          "type": "paragraph",
+          "text": "Type of annourine\n| | Materiat of conductor",
+          "bbox": {
+            "x": 10.8,
+            "y": 483.36,
+            "width": 171.12,
+            "height": 31.68
+          },
+          "font_size": 9.79,
+          "bold": false,
+          "color": "#4e4e4e"
+        },
+        {
+          "id": "p0_e13",
+          "type": "header",
+          "text": "13 | Conductor material standard",
+          "bbox": {
+            "x": 23.76,
+            "y": 514.08,
+            "width": 195.84,
+            "height": 17.52
+          },
+          "font_size": 11.71,
+          "bold": true,
+          "color": "#5e5e5e"
+        },
+        {
+          "id": "p0_e14",
+          "type": "paragraph",
+          "text": "Construction of Conductor",
+          "bbox": {
+            "x": 57.36,
+            "y": 531.84,
+            "width": 153.12,
+            "height": 11.76
+          },
+          "font_size": 8.64,
+          "bold": false,
+          "color": "#4c4c4c"
+        },
+        {
+          "id": "p0_e15",
+          "type": "list",
+          "text": "15) | Cable wound on",
+          "bbox": {
+            "x": 24.72,
+            "y": 546.96,
+            "width": 126.48,
+            "height": 14.16
+          },
+          "font_size": 8.64,
+          "bold": false,
+          "color": "#464646",
+          "items": [
+            "15) | Cable wound on"
+          ],
+          "list_kind": "bullet"
+        },
+        {
+          "id": "p0_e16",
+          "type": "paragraph",
+          "text": "| | Drum standard\n| 17 |",
+          "bbox": {
+            "x": 10.8,
+            "y": 561.36,
+            "width": 132.48,
+            "height": 39.36
+          },
+          "font_size": 15.37,
+          "bold": false,
+          "color": "#727272"
+        },
+        {
+          "id": "p0_e17",
+          "type": "paragraph",
+          "text": "ype af sequential marking on cable",
+          "bbox": {
+            "x": 68.16,
+            "y": 581.28,
+            "width": 195.84,
+            "height": 13.68
+          },
+          "font_size": 7.87,
+          "bold": false,
+          "color": "#3c3c3c"
+        },
+        {
+          "id": "p0_e18",
+          "type": "paragraph",
+          "text": "18 | Availabilicy of type test report from",
+          "bbox": {
+            "x": 24.72,
+            "y": 596.4,
+            "width": 264.0,
+            "height": 15.6
+          },
+          "font_size": 8.64,
+          "bold": false,
+          "color": "#434343"
+        },
+        {
+          "id": "p0_e19",
+          "type": "paragraph",
+          "text": "Govt. accredited lab/ILAC\naccredited lab\n19 | Availability of optional testing report",
+          "bbox": {
+            "x": 25.68,
+            "y": 612.72,
+            "width": 263.04,
+            "height": 47.52
+          },
+          "font_size": 8.64,
+          "bold": false,
+          "color": "#464646"
+        },
+        {
+          "id": "p0_e20",
+          "type": "paragraph",
+          "text": "Cable suitable for use in low",
+          "bbox": {
+            "x": 58.32,
+            "y": 336.96,
+            "width": 231.36,
+            "height": 13.68
+          },
+          "font_size": 8.64,
+          "bold": false,
+          "color": "#3e3e3e"
+        },
+        {
+          "id": "p0_e21",
+          "type": "paragraph",
+          "text": "Classifications of table for improved fire",
+          "bbox": {
+            "x": 58.32,
+            "y": 402.24,
+            "width": 231.36,
+            "height": 16.8
+          },
+          "font_size": 7.87,
+          "bold": false,
+          "color": "#464646"
+        },
+        {
+          "id": "p0_e22",
+          "type": "paragraph",
+          "text": "cable\nThermoplastic",
+          "bbox": {
+            "x": 324.24,
+            "y": 436.8,
+            "width": 90.0,
+            "height": 30.72
+          },
+          "font_size": 9.88,
+          "bold": false,
+          "color": "#484848"
+        },
+        {
+          "id": "p0_e23",
+          "type": "paragraph",
+          "text": "Galvanized steel wirt\nSingle Strip",
+          "bbox": {
+            "x": 324.24,
+            "y": 468.48,
+            "width": 165.12,
+            "height": 28.56
+          },
+          "font_size": 8.26,
+          "bold": false,
+          "color": "#3b3b3b"
+        },
+        {
+          "id": "p0_e24",
+          "type": "paragraph",
+          "text": "As per [5:8130: 2013 latest",
+          "bbox": {
+            "x": 324.24,
+            "y": 516.96,
+            "width": 149.28,
+            "height": 14.88
+          },
+          "font_size": 7.87,
+          "bold": false,
+          "color": "#3f3f3f"
+        },
+        {
+          "id": "p0_e25",
+          "type": "paragraph",
+          "text": "_Stranded and Shaped",
+          "bbox": {
+            "x": 319.44,
+            "y": 528.72,
+            "width": 121.44,
+            "height": 19.92
+          },
+          "font_size": 11.14,
+          "bold": false,
+          "color": "#515151"
+        },
+        {
+          "id": "p0_e26",
+          "type": "paragraph",
+          "text": "[SI marked wooden dram\n1S: 10418 Latest\nScreen/Embossed orinting on cable",
+          "bbox": {
+            "x": 325.2,
+            "y": 546.48,
+            "width": 198.72,
+            "height": 46.56
+          },
+          "font_size": 8.26,
+          "bold": false,
+          "color": "#424242"
+        },
+        {
+          "id": "p0_e27",
+          "type": "paragraph",
+          "text": "Nat",
+          "bbox": {
+            "x": 331.2,
+            "y": 645.36,
+            "width": 19.68,
+            "height": 10.08
+          },
+          "font_size": 8.06,
+          "bold": false,
+          "color": "#434343"
+        }
+      ]
+    }
+  ]
+}

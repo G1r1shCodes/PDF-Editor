@@ -1,0 +1,33 @@
+{
+  "dpi": 300,
+  "bbox_points": {
+    "x": 365.76,
+    "y": 275.52,
+    "width": 69.36,
+    "height": 12.959999999999999
+  },
+  "bbox_pixels": {
+    "x": 1524,
+    "y": 1148,
+    "width": 289,
+    "height": 54
+  },
+  "padding_points": 8.0,
+  "padding_pixels": 33,
+  "crop_box_pixels": {
+    "left": 1491,
+    "top": 1115,
+    "right": 1846,
+    "bottom": 1235,
+    "width": 355,
+    "height": 120
+  },
+  "page_image_pixels": {
+    "width": 2480,
+    "height": 3509
+  },
+  "session_id": "Z1bDl5PMssE=",
+  "page_number": 0,
+  "original_text": "IS:7098(part",
+  "replacement_text": "Girish "
+}

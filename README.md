@@ -1,194 +1,149 @@
-# PDFEdit — Smart PDF Editor
+# PDFEdit - Smart PDF Editor
 
-A lean, open-source web PDF editor that handles **both digital PDFs and scanned image PDFs**,
-preserving fonts, sizes, and colors when you edit.
+Local web PDF editor for both digital PDFs and scanned image PDFs.
 
-Built by combining:
-- **OCRmyPDF + Tesseract** → scanned image PDF support
-- **PyMuPDF (fitz)** → font metadata extraction from digital PDFs
-- **React + PDF.js-style canvas** → click-to-edit text overlay in the browser
-
----
+The app renders each PDF page as an image, overlays editable text blocks in the browser, and writes changed text back into a new PDF.
 
 ## Features
 
 | Feature | Digital PDF | Scanned PDF |
 |---|---|---|
-| Auto-detect type | ✅ | ✅ |
-| Extract text with font/size/color | ✅ | ✅ (OCR) |
-| Click-to-edit any text block | ✅ | ✅ |
-| Font family picker | ✅ | ✅ |
-| Font size slider | ✅ | ✅ |
-| Color picker | ✅ | ✅ |
-| Download edited PDF | ✅ | ✅ |
-| All local — no cloud upload | ✅ | ✅ |
-
----
+| Auto-detect page type | Yes | Yes |
+| Extract text blocks | Yes | Yes, via OCR |
+| Preserve native font size/color where available | Yes | Estimated from OCR boxes |
+| Click-to-edit text | Yes | Yes |
+| Font, size, and color controls | Yes | Yes |
+| Download edited PDF | Yes | Yes |
+| Local processing | Yes | Yes |
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Browser (React)                                             │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │  Left sidebar   │  PDF Canvas         │  Right sidebar │ │
-│  │  Upload / zoom  │  Page image + text  │  Font / color  │ │
-│  │                 │  overlays           │  properties    │ │
-│  └────────────────────────────────────────────────────────┘ │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ REST (JSON + multipart)
-┌───────────────────────────▼─────────────────────────────────┐
-│  FastAPI backend (Python)                                    │
-│                                                             │
-│  POST /upload                                               │
-│    ├─ fitz.open()  → detect scanned vs digital              │
-│    ├─ Digital → fitz.get_text("rawdict") → font metadata    │
-│    └─ Scanned → pdf2image + Tesseract OCR → word boxes      │
-│                                                             │
-│  POST /save                                                 │
-│    └─ fitz.insert_text() with matched font + color          │
-└─────────────────────────────────────────────────────────────┘
+```text
+Browser (React/Vite)
+  - Upload PDF
+  - Display rendered page PNGs
+  - Overlay editable text boxes
+  - Send edits to backend
+
+FastAPI backend
+  - POST /upload: store PDF, render pages, extract text/OCR boxes
+  - POST /save: redact edited regions, insert replacement text, return PDF
+  - GET /fonts, GET /health, DELETE /session/{session_id}
+
+PDF/OCR tools
+  - PyMuPDF: render, extract native text/font metadata, write edits
+  - pytesseract + Tesseract binary: OCR scanned pages
+  - Pillow: image bridge for OCR
 ```
 
-**Libraries used:**
+## Project Layout
 
-| Library | Role |
-|---|---|
-| `pymupdf` (fitz) | PDF rendering, font extraction, writing edits back |
-| `pytesseract` | OCR engine wrapper |
-| `pdf2image` | Convert PDF pages to PIL images for Tesseract |
-| `ocrmypdf` | Available for batch OCR pipeline extension |
-| `fastapi` + `uvicorn` | REST API server |
-| `react` | Frontend UI |
+This repo uses a flat layout:
 
----
-
-## Quick Start (Docker — recommended)
-
-```bash
-git clone <this-repo>
-cd pdf-editor
-docker compose up --build
+```text
+PDF Editor Tool/
+  App.jsx
+  main.jsx
+  index.html
+  vite.config.js
+  main.py
+  requirements.txt
+  Dockerfile
+  Dockerfile.frontend
+  docker-compose.yml
+  nginx.conf
 ```
 
-Then open **http://localhost:5173** in your browser.
-
----
-
-## Quick Start (local dev)
+## Local Development
 
 ### Backend
 
-```bash
-# Prerequisites: Python 3.10+, Tesseract, poppler-utils
-# Ubuntu/Debian:  sudo apt install tesseract-ocr poppler-utils
-# macOS:          brew install tesseract poppler
+Prerequisites:
 
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+- Python 3.10+
+- Tesseract OCR installed
+
+On Windows, the backend auto-detects common Tesseract install paths, including:
+
+```text
+C:\Program Files\Tesseract-OCR\tesseract.exe
 ```
+
+Install Python dependencies:
+
+```powershell
+./venv/Scripts/python.exe -m pip install -r requirements.txt
+```
+
+Run the backend:
+
+```powershell
+./venv/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+If port 8000 is already in use, either stop the old backend process or use another port and set `VITE_API_URL` for the frontend.
 
 ### Frontend
 
-```bash
-cd frontend
+```powershell
 npm install
 npm run dev
-# Opens at http://localhost:5173
 ```
 
----
+Open:
 
-## How It Works
-
-### Step 1 — Upload
-
-The backend receives your PDF and for each page:
-- Counts extractable text characters
-- If `< 20 chars` → treats page as **scanned image** → runs Tesseract OCR
-- Otherwise → reads native **font metadata** (name, size, color, bold/italic flags)
-
-### Step 2 — Render
-
-The frontend receives:
-- A base64 PNG of each page (rendered at 150 DPI via PyMuPDF)
-- A list of text blocks with position, font, size, color
-
-The page image is the background. React renders **invisible div overlays** exactly on top of each text block, styled with the matching CSS font.
-
-### Step 3 — Edit
-
-Click any text block → it appears in the Properties panel on the right.
-Change text, font, size, or color → the overlay updates instantly.
-
-### Step 4 — Save
-
-The backend applies all edits:
-1. White-rectangle covers the original text area
-2. `fitz.insert_text()` writes new text with the chosen font/color
-3. The modified PDF is returned as a download
-
----
-
-## Project Structure
-
-```
-pdf-editor/
-├── backend/
-│   ├── main.py            # FastAPI app — all endpoints
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx        # Entire React app (single file)
-│   │   └── main.jsx       # Entry point
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── Dockerfile
-│   └── nginx.conf
-├── docker-compose.yml
-└── README.md
+```text
+http://localhost:5173
 ```
 
----
+The frontend uses `/api` by default. Vite proxies `/api` to `http://localhost:8000`.
 
-## Limitations & Known Gaps
+## Docker
 
-- **Font matching for scanned PDFs**: Tesseract doesn't return font names, so we fall back to Helvetica as the base. The size is estimated from bounding box height.
-- **Complex layouts**: Multi-column, tables, and rotated text may not align perfectly.
-- **Right-to-left text**: Not currently supported.
-- **Ligatures and special glyphs**: PyMuPDF's built-in fonts cover standard Latin only.
-
----
-
-## Extending
-
-### Add more OCR languages
-
-```bash
-# Install Tesseract language pack
-sudo apt install tesseract-ocr-hin   # Hindi example
+```powershell
+docker compose up --build
 ```
 
-Then pass `lang="hin"` to `pytesseract.image_to_data()` in `main.py`.
+Then open:
 
-### Swap Tesseract for EasyOCR (better accuracy)
-
-```python
-import easyocr
-reader = easyocr.Reader(["en"])
-results = reader.readtext(img_array, detail=1)
+```text
+http://localhost:5173
 ```
 
-### Add page reordering / merge / split
+Docker runs:
 
-Expose additional PyMuPDF operations as new FastAPI endpoints and add buttons to the sidebar.
+- backend on port 8000
+- frontend/nginx on port 5173
+- nginx proxies `/api/` to the backend service
 
----
+## How Editing Works
 
-## License
+1. Upload a PDF.
+2. Backend stores it in `tmp_pdf_editor/<session_id>/original.pdf`.
+3. Each page is rendered to PNG at 150 DPI.
+4. Digital pages use PyMuPDF text spans.
+5. Scanned pages fall back to Tesseract OCR word boxes.
+6. User edits blocks in React.
+7. Save request redacts edited boxes and inserts replacement text.
+8. Browser downloads `edited.pdf`.
 
-MIT — fork, extend, ship.
-"# PDF-Editor" 
+## Limitations
+
+- OCR font family is guessed as Helvetica.
+- OCR font size is estimated from word-box height.
+- Complex layouts, tables, rotated text, and non-Latin scripts may need more work.
+- Edits are stamped into the PDF; this is not a full structured PDF content editor.
+
+## Useful Checks
+
+Backend health:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+Tesseract check:
+
+```powershell
+& "C:\Program Files\Tesseract-OCR\tesseract.exe" --version
+```

@@ -1,21 +1,19 @@
-version: "3.9"
-
 services:
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - pdf_tmp:/tmp/pdf_editor
+      - pdf_tmp:/app/tmp_pdf_editor
     environment:
       - PYTHONUNBUFFERED=1
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.frontend
     ports:
       - "5173:80"
     depends_on:

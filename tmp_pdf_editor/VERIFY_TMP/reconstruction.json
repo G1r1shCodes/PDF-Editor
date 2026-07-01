@@ -1,0 +1,81 @@
+{
+  "pages": [
+    {
+      "page": 0,
+      "width": 612.0,
+      "height": 792.0,
+      "elements": [
+        {
+          "id": "p0_e0",
+          "type": "paragraph",
+          "text": "BANSAL POLYPLAST PRIVATE LIMITED PURCHASE ORDER\nBP Web Site: www.bansalpolyplast.com\nPurchase Order Details\nPurchase Order ID BPPL-2026-27-PO-10 Purchase Order Date",
+          "bbox": {
+            "x": 20.16,
+            "y": 57.84,
+            "width": 489.6,
+            "height": 83.52
+          },
+          "font_size": 7.08,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e1",
+          "type": "paragraph",
+          "text": "Vendor KDI POWER PRIVATE LIMITED(K-3010-0)\nH-1243, DSIDC INDUSTRIAL AREA, NARELA, NORTH WEST DELHI, DELHI NORTH WEST\nState (Source of Supply): DELHI (India) Pincode: 110040\nGSTIN : 07AAHCK2079D1ZM\nName : VIPUL KUMAR | Contact No : 9205333843 | Contact Email : vipul@kdipower.com",
+          "bbox": {
+            "x": 20.4,
+            "y": 189.12,
+            "width": 556.8,
+            "height": 50.64
+          },
+          "font_size": 4.82,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e2",
+          "type": "paragraph",
+          "text": "Billing Address Shipping Address\nBANSAL POLYPLAST PRIVATE LIMITED BANSAL POLYPLAST PRIVATE LIMITED\nSP-272 (I&J), H 1-508, BANSAL POLYPLAST PRIVATE LIMITED-ALWAR, MATSYA_ |SP-272 ([&J), H 1-508, BANSAL POLYPLAST PRIVATE LIMITED-\nINDUSTRIAL AREA, ALWAR, ALWAR ALWAR, MATSYA\nState (Destination of Supply) : Rajsthan, 301030 INDUSTRIAL AREA, ALWAR, ALWAR\nGSTIN : State (Destination of Supply) : Rajsthan, 301030\nContact No.: GSTIN :\nEmail: Contact No.:\nEmail:",
+          "bbox": {
+            "x": 20.4,
+            "y": 281.76,
+            "width": 543.6,
+            "height": 91.92
+          },
+          "font_size": 4.85,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e3",
+          "type": "paragraph",
+          "text": "Sr. |Item Details HSN/SAC |Qty UOM Unit Rate |Discount |GST Amount\nNO.\n1 }30 SQ MM ACSR CONDUCTOR (WEASEL) 76042910 10000 MTR 48 0% 480,000\nCode:\nMfr:\nRemark :Make: KDI POWER",
+          "bbox": {
+            "x": 20.4,
+            "y": 390.96,
+            "width": 566.4,
+            "height": 60.0
+          },
+          "font_size": 4.7,
+          "bold": false,
+          "color": "#000000"
+        },
+        {
+          "id": "p0_e4",
+          "type": "paragraph",
+          "text": "Total in words (INR) : Rupees Five Lakh Sixty Six Thousand Four Hundred Only\nTerms & Conditions\n1. DEFINITION & ESSENCE 1. BANSAL POLYPLAST Pvt. Ltd. herein referred to as the Buyer/ Service Recipient and KDI Power Pvt. Ltd.\nreferred to as the\nSeller/ Service Provider and together as Parties.\n2. Supply of Goods and Services shall in all circumstances be strictly in accordance with Buyer's/ Service\nRecipient's specifications, Terms and Conditions.\n3. All Purchase Orders shall be strictly subject to Buyer's / Service Recipient's standard terms and conditions for\npurchase of goods/ services as mentioned below, unless specifically mentioned in the Purchase Order/ Work order",
+          "bbox": {
+            "x": 20.4,
+            "y": 527.04,
+            "width": 567.36,
+            "height": 97.44
+          },
+          "font_size": 4.71,
+          "bold": false,
+          "color": "#000000"
+        }
+      ]
+    }
+  ]
+}

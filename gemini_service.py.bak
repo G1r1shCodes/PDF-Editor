@@ -1,0 +1,241 @@
+"""Gemini AI image-editing service.
+
+Sends a full-page scan to Gemini 3.1 Flash Image, asking it to replace
+text only inside a highlighted bounding box while preserving every other
+pixel.  Falls back to a local Pillow renderer when the API is unavailable.
+"""
+
+import base64
+import io
+import json
+import os
+import urllib.request
+from typing import Optional, Tuple
+
+from PIL import Image, ImageDraw, ImageFont
+
+
+class GeminiEditError(RuntimeError):
+    """Raised when Gemini image editing cannot produce a usable crop."""
+
+
+# ---------------------------------------------------------------------------
+# Prompt builder
+# ---------------------------------------------------------------------------
+
+def _build_full_page_prompt(
+    original_text: str,
+    replacement_text: str,
+    bbox_px: dict,
+    page_size: Tuple[int, int],
+) -> str:
+    """Build a precise prompt that tells the model *where* to edit."""
+    x, y, w, h = bbox_px["x"], bbox_px["y"], bbox_px["width"], bbox_px["height"]
+    pw, ph = page_size
+    return (
+        "You are a document image editor.  The image you received is a full "
+        "scanned page of a PDF document.\n\n"
+        f"The page image is {pw}×{ph} pixels.\n"
+        f"Inside this page, there is a text region at pixel coordinates:\n"
+        f"  top-left  = ({x}, {y})\n"
+        f"  size      = {w}×{h} px\n\n"
+        f"That region currently reads: \"{original_text}\"\n\n"
+        f"Replace ONLY that text with: \"{replacement_text}\"\n\n"
+        "Rules:\n"
+        "• Match the exact font family, weight, size, colour and baseline of "
+        "the surrounding text.\n"
+        "• Preserve the background colour / texture / table lines / borders "
+        "that exist behind and around the text.\n"
+        "• Do NOT alter ANY other part of the page — every pixel outside the "
+        "specified region must remain identical.\n"
+        "• Return the complete page image with the edit applied."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Response parser
+# ---------------------------------------------------------------------------
+
+def _find_base64_image(obj) -> Optional[str]:
+    """Recursively search a JSON response tree for base64 image data."""
+    if isinstance(obj, dict):
+        if "inlineData" in obj and isinstance(obj["inlineData"], dict):
+            return obj["inlineData"].get("data")
+        if "image" in obj and isinstance(obj["image"], dict):
+            return obj["image"].get("data")
+        # Generic "data" field that looks like a large b64 blob
+        if "data" in obj and isinstance(obj["data"], str) and len(obj["data"]) > 200:
+            return obj["data"]
+        for v in obj.values():
+            found = _find_base64_image(v)
+            if found:
+                return found
+    elif isinstance(obj, list):
+        for item in obj:
+            found = _find_base64_image(item)
+            if found:
+                return found
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
+
+def send_to_gemini(
+    full_page: Image.Image,
+    crop: Image.Image,
+    original_text: str,
+    replacement_text: str,
+    api_key: str,
+    bbox_px: dict,
+) -> Image.Image:
+    """Edit text on a scanned document page using Gemini, returning a crop.
+
+    Parameters
+    ----------
+    full_page : PIL.Image
+        The complete page rendered at 300 DPI.
+    crop : PIL.Image
+        The cropped region (used as fallback dimensions).
+    original_text / replacement_text : str
+        What to find and what to write.
+    api_key : str
+        User-supplied Gemini API key.
+    bbox_px : dict
+        Pixel-level bounding box ``{x, y, width, height}`` at the same
+        DPI as *full_page*.
+
+    Returns
+    -------
+    PIL.Image
+        An image with the *same pixel dimensions as crop*, containing the
+        edited region.
+    """
+    if not api_key:
+        raise GeminiEditError("Gemini API key is required for AI image editing.")
+
+    # ── 1.  Encode the full page as PNG → base64 ──────────────────────────
+    buf = io.BytesIO()
+    full_page.save(buf, format="PNG")
+    page_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+
+    # ── 2.  Call Gemini Interactions REST API ──────────────────────────────
+    prompt = _build_full_page_prompt(
+        original_text, replacement_text, bbox_px, full_page.size
+    )
+    url = "https://generativelanguage.googleapis.com/v1beta/interactions"
+    payload = {
+        "model": "gemini-3.1-flash-image",
+        "input": {
+            "prompt": prompt,
+            "image": {
+                "mimeType": "image/png",
+                "data": page_b64,
+            },
+        },
+    }
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+
+        img_b64 = _find_base64_image(body)
+        if img_b64:
+            edited_page = Image.open(io.BytesIO(base64.b64decode(img_b64))).convert("RGB")
+
+            # Crop the target region out of the returned full page
+            x = bbox_px["x"]
+            y = bbox_px["y"]
+            w = bbox_px["width"]
+            h = bbox_px["height"]
+            edited_crop = edited_page.crop((x, y, x + w, y + h))
+            return edited_crop
+        else:
+            print("[WARN] No image in Gemini response — falling back to local render")
+
+    except Exception as exc:
+        print(f"[WARN] Gemini API call failed ({exc}) — falling back to local render")
+
+    # ── 3.  Local Pillow fallback ─────────────────────────────────────────
+    return _local_render_fallback(crop, replacement_text)
+
+
+# ---------------------------------------------------------------------------
+# Local fallback renderer
+# ---------------------------------------------------------------------------
+
+def _local_render_fallback(crop: Image.Image, replacement_text: str) -> Image.Image:
+    """Best-effort local rendering when the Gemini API is unavailable."""
+
+    # Sample background colour from the original crop's corners
+    pixels = crop.load()
+    w, h = crop.size
+    corners = []
+    for cx, cy in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
+        if 0 <= cx < w and 0 <= cy < h:
+            corners.append(pixels[cx, cy])
+    if corners:
+        bg_rgb = tuple(
+            sum(c[i] for c in corners) // len(corners) for i in range(3)
+        )
+    else:
+        bg_rgb = (255, 255, 255)
+
+    # Estimate text colour as the darkest pixel in the centre band
+    centre_y = h // 2
+    band = range(max(0, centre_y - 4), min(h, centre_y + 5))
+    darkest = (255, 255, 255)
+    darkest_lum = 255 * 3
+    for sy in band:
+        for sx in range(w):
+            px = pixels[sx, sy]
+            lum = px[0] + px[1] + px[2]
+            if lum < darkest_lum:
+                darkest_lum = lum
+                darkest = px
+    text_rgb = darkest if darkest_lum < 600 else (0, 0, 0)
+
+    edited = Image.new("RGB", crop.size, bg_rgb)
+    draw = ImageDraw.Draw(edited)
+
+    # Pick a font file
+    font = None
+    target_h = int(h * 0.55)  # aim for ~55 % of the crop height
+    if target_h < 8:
+        target_h = 8
+    for path in [
+        r"C:\Windows\Fonts\arial.ttf",
+        r"C:\Windows\Fonts\arialbd.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]:
+        try:
+            if os.path.exists(path):
+                font = ImageFont.truetype(path, target_h)
+                break
+        except Exception:
+            pass
+    if font is None:
+        font = ImageFont.load_default()
+
+    # Centre the replacement text
+    try:
+        bbox = draw.textbbox((0, 0), replacement_text, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+        tx = (w - tw) / 2
+        ty = (h - th) / 2 - bbox[1]
+    except Exception:
+        tx, ty = 4, 4
+
+    draw.text((max(0, tx), max(0, ty)), replacement_text, fill=text_rgb, font=font)
+    return edited

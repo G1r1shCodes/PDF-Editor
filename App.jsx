@@ -1,9 +1,9 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_URL || "/api";
 
 // The backend renders page images at 150 DPI but returns text coordinates
-// in PDF points (72 DPI). This ratio converts points → image pixels.
+// in PDF points (72 DPI). This ratio converts points to image pixels.
 const DPI = 150;
 const DPI_RATIO = DPI / 72;
 
@@ -42,7 +42,7 @@ function Spinner() {
 
 function ToolBar({ activeTool, setActiveTool, onSave, saving, hasDoc }) {
   const tools = [
-    { id: "select", icon: "⬚", label: "Select Region" },
+    { id: "select", icon: "[]", label: "Select Region" },
     { id: "edit", icon: "T", label: "Edit Text" },
   ];
 
@@ -85,14 +85,32 @@ function ToolBar({ activeTool, setActiveTool, onSave, saving, hasDoc }) {
             fontWeight: 700, fontSize: 13,
           }}
         >
-          {saving ? "Saving…" : "⬇ Download Edited PDF"}
+          {saving ? "Saving..." : "Download Edited PDF"}
         </button>
       )}
     </div>
   );
 }
 
-function PropertiesPanel({ selectedBlock, onUpdate }) {
+function PropertiesPanel({
+  selectedBlock,
+  onUpdate,
+  editMode,
+  setEditMode,
+  aiReplacementText,
+  setAiReplacementText,
+  aiPadding,
+  setAiPadding,
+  aiEditProvider,
+  setAiEditProvider,
+  aiEditApiKey,
+  setAiEditApiKey,
+  onAiReplace,
+  aiLoading,
+  aiPreview,
+  aiError,
+  aiMessage,
+}) {
   if (!selectedBlock) {
     return (
       <div style={{ padding: 20, color: "#64748b", fontSize: 13, textAlign: "center" }}>
@@ -111,58 +129,192 @@ function PropertiesPanel({ selectedBlock, onUpdate }) {
         Text Properties
       </div>
 
-      <label style={labelStyle}>
-        <span>Content</span>
-        <textarea
-          value={text}
-          onChange={e => onUpdate({ text: e.target.value })}
-          style={{ ...inputStyle, minHeight: 80, resize: "vertical", lineHeight: 1.5 }}
-        />
-      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+        {["standard", "ai"].map(mode => (
+          <button
+            key={mode}
+            onClick={() => setEditMode(mode)}
+            style={{
+              border: "1px solid #334155",
+              borderRadius: 6,
+              padding: "7px 8px",
+              background: editMode === mode ? "#6366f1" : "#1e293b",
+              color: "#f8fafc",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {mode === "standard" ? "Standard" : "AI Edit"}
+          </button>
+        ))}
+      </div>
 
-      <label style={labelStyle}>
-        <span>Font Family</span>
-        <select
-          value={font_name}
-          onChange={e => onUpdate({ font_name: e.target.value })}
-          style={inputStyle}
-        >
-          {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-      </label>
+      {editMode === "standard" ? (
+        <>
+          <label style={labelStyle}>
+            <span>Content</span>
+            <textarea
+              value={text}
+              onChange={e => onUpdate({ text: e.target.value })}
+              style={{ ...inputStyle, minHeight: 80, resize: "vertical", lineHeight: 1.5 }}
+            />
+          </label>
 
-      <label style={labelStyle}>
-        <span>Font Size</span>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input
-            type="range" min={6} max={72} step={0.5}
-            value={font_size}
-            onChange={e => onUpdate({ font_size: parseFloat(e.target.value) })}
-            style={{ flex: 1 }}
-          />
-          <span style={{ color: "#f8fafc", width: 30, fontSize: 12 }}>{font_size}</span>
-        </div>
-      </label>
+          <label style={labelStyle}>
+            <span>Font Family</span>
+            <select
+              value={font_name}
+              onChange={e => onUpdate({ font_name: e.target.value })}
+              style={inputStyle}
+            >
+              {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </label>
 
-      <label style={labelStyle}>
-        <span>Color</span>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input
-            type="color"
-            value={color}
-            onChange={e => onUpdate({ color: e.target.value })}
-            style={{ width: 40, height: 32, border: "none", borderRadius: 4, cursor: "pointer", background: "none" }}
-          />
-          <span style={{ color: "#94a3b8", fontSize: 12 }}>{color}</span>
-        </div>
-      </label>
+          <label style={labelStyle}>
+            <span>Font Size</span>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <input
+                type="range" min={6} max={72} step={0.5}
+                value={font_size}
+                onChange={e => onUpdate({ font_size: parseFloat(e.target.value) })}
+                style={{ flex: 1 }}
+              />
+              <span style={{ color: "#f8fafc", width: 30, fontSize: 12 }}>{font_size}</span>
+            </div>
+          </label>
+
+          <label style={labelStyle}>
+            <span>Color</span>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input
+                type="color"
+                value={color}
+                onChange={e => onUpdate({ color: e.target.value })}
+                style={{ width: 40, height: 32, border: "none", borderRadius: 4, cursor: "pointer", background: "none" }}
+              />
+              <span style={{ color: "#94a3b8", fontSize: 12 }}>{color}</span>
+            </div>
+          </label>
+        </>
+      ) : (
+        <>
+          <label style={labelStyle}>
+            <span>AI Provider</span>
+            <select
+              value={aiEditProvider}
+              onChange={e => setAiEditProvider(e.target.value)}
+              style={inputStyle}
+            >
+              <option value="gemini">Gemini</option>
+              <option value="replicate">Replicate (InstructPix2Pix)</option>
+            </select>
+          </label>
+          <label style={labelStyle}>
+            <span>API Key</span>
+            <input
+              type="password"
+              value={aiEditApiKey}
+              onChange={e => setAiEditApiKey(e.target.value)}
+              placeholder="Stored locally in this browser"
+              style={inputStyle}
+            />
+          </label>
+
+          <label style={labelStyle}>
+            <span>Original Text</span>
+            <textarea
+              value={text}
+              readOnly
+              style={{ ...inputStyle, minHeight: 54, resize: "vertical", lineHeight: 1.4, color: "#94a3b8" }}
+            />
+          </label>
+
+          <label style={labelStyle}>
+            <span>Replacement Text</span>
+            <textarea
+              value={aiReplacementText}
+              onChange={e => setAiReplacementText(e.target.value)}
+              placeholder="Text AI should render into this region"
+              style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.4 }}
+            />
+          </label>
+
+          <button
+            onClick={onAiReplace}
+            disabled={aiLoading || !aiReplacementText.trim()}
+            style={{
+              background: aiLoading || !aiReplacementText.trim() ? "#334155" : "#10b981",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding: "9px 12px",
+              cursor: aiLoading || !aiReplacementText.trim() ? "not-allowed" : "pointer",
+              fontWeight: 700,
+              fontSize: 13,
+            }}
+          >
+            {aiLoading ? "Preparing..." : "AI Replace"}
+          </button>
+
+          {aiError && (
+            <div style={{ background: "#450a0a", color: "#fca5a5", borderRadius: 6, padding: "8px 10px", fontSize: 12 }}>
+              {aiError}
+            </div>
+          )}
+
+          {aiMessage && (
+            <div style={{ background: "#052e16", color: "#86efac", borderRadius: 6, padding: "8px 10px", fontSize: 12 }}>
+              {aiMessage}
+            </div>
+          )}
+
+          {aiPreview && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
+                Crop Preview
+              </div>
+              <img
+                src={`data:image/png;base64,${aiPreview.crop_image_b64}`}
+                alt="AI edit crop preview"
+                style={{ width: "100%", background: "#fff", borderRadius: 4, border: "1px solid #334155" }}
+              />
+              <button
+                onClick={() => {
+                  onUpdate({
+                    text: aiReplacementText,
+                    crop_image_b64: aiPreview.crop_image_b64,
+                    edit_id: aiPreview.edit_id,
+                    is_ai_edit: true
+                  });
+                }}
+                style={{
+                  background: "#10b981",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "9px 12px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  marginTop: 4,
+                  width: "100%",
+                }}
+              >
+                Apply AI Edit
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {selectedBlock.is_ocr && (
         <div style={{
           background: "#1e293b", borderRadius: 6, padding: "8px 10px",
           fontSize: 11, color: "#f59e0b", display: "flex", gap: 6,
         }}>
-          ⚡ OCR-detected text — check for accuracy
+          OCR-detected text - check for accuracy
         </div>
       )}
     </div>
@@ -193,12 +345,12 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
     ...(editedBlocks[b.id] || {}),
   }));
 
-  // Container is sized to the actual image pixel dimensions (points × DPI_RATIO),
+  // Container is sized to the actual image pixel dimensions (points x DPI_RATIO),
   // then scaled by the user-zoom factor.
   const pw = pageInfo.width * DPI_RATIO * scale;
   const ph = pageInfo.height * DPI_RATIO * scale;
 
-  // Combined scale factor: points → display pixels
+  // Combined scale factor: points to display pixels
   const totalScale = DPI_RATIO * scale;
 
   // Convert a mouse event to position relative to the container
@@ -356,9 +508,13 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                 minWidth: 24,
                 height: Math.max(block.height, 10) * totalScale,
                 minHeight: 16,
-                // Only make text visible if it has been edited
-                color: editedBlocks[block.id] ? block.color : "transparent",
+                // Only make text visible if it has been edited (and is not an AI edit)
+                color: editedBlocks[block.id]
+                  ? (editedBlocks[block.id].is_ai_edit ? "transparent" : block.color)
+                  : "transparent",
                 fontFamily: FONT_CSS_MAP[block.font_name] || "Helvetica",
+                fontWeight: block.font_name?.toLowerCase().includes("bold") ? "bold" : "normal",
+                fontStyle: (block.font_name?.toLowerCase().includes("italic") || block.font_name?.toLowerCase().includes("oblique")) ? "italic" : "normal",
                 fontSize: block.font_size * totalScale,
                 whiteSpace: "pre-wrap",
                 lineHeight: 1.2,
@@ -371,9 +527,12 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                     : "none",
                 outlineOffset: 1,
                 borderRadius: 2,
-                // If it's edited, give it a solid white background to cover the original image text
+                // If it's edited, give it its detected background color to cover the original image text
+                // If it's an AI edit, use the base64 crop image as background cover
                 background: editedBlocks[block.id]
-                  ? "#ffffff"
+                  ? (editedBlocks[block.id].is_ai_edit
+                    ? `url(data:image/png;base64,${editedBlocks[block.id].crop_image_b64}) no-repeat center/cover`
+                    : editedBlocks[block.id].background_color || block.background_color || "#ffffff")
                   : isSelected
                     ? "rgba(99,102,241,0.3)"
                     : isHovered
@@ -419,13 +578,270 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
         textAlign: "center", fontSize: 11, color: "#64748b",
       }}>
         Page {pageInfo.page_number + 1}
-        {pageInfo.is_scanned && <span style={{ color: "#f59e0b", marginLeft: 6 }}>● OCR</span>}
+        {pageInfo.is_scanned && <span style={{ color: "#f59e0b", marginLeft: 6 }}>OCR</span>}
       </div>
     </div>
   );
 }
 
 // ── Main App ──────────────────────────────────────────────────────────────────
+
+
+// ── Scan edit-mode selection modal ────────────────────────────────────────────
+function ScanModeModal({ onReconstruct, onAiImage }) {
+  const card = {
+    flex: 1, background: "#0f172a", border: "1px solid #1e293b",
+    borderRadius: 12, padding: 20, cursor: "pointer", textAlign: "left",
+    color: "#f8fafc", display: "flex", flexDirection: "column", gap: 8,
+  };
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(2,6,23,0.82)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 50, padding: 24,
+    }}>
+      <div style={{ width: "100%", maxWidth: 720 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+          This is a scanned PDF — choose an editing mode
+        </div>
+        <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 18 }}>
+          You can pick a different mode at any time from the left sidebar.
+        </div>
+        <div style={{ display: "flex", gap: 16 }}>
+          <button style={card} onClick={onReconstruct}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#818cf8" }}>Reconstruct &amp; Edit</div>
+            <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
+              Extract the page structure (headings, paragraphs, tables) into an
+              editable document, then regenerate a clean PDF. Output is crisp
+              digital text on a white background — the scanned look is dropped.
+            </div>
+          </button>
+          <button style={card} onClick={onAiImage}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#34d399" }}>AI Image Edit</div>
+            <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
+              Select a region and let AI re-render just that text while keeping
+              the scan texture, fonts and surrounding content. Best when you want
+              to preserve the original scanned appearance.
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Reconstruct & Edit structured editor ──────────────────────────────────────
+function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, setNvidiaApiKey }) {
+  const [doc, setDoc] = useState(null);      // ReconstructedDocument
+  const [edits, setEdits] = useState({});    // elementId -> { text } | { rows }
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState(null);
+  const [ocrEngine, setOcrEngine] = useState("nemotron"); // Default to nemotron
+
+  const runReconstruction = useCallback(async () => {
+    setLoading(true); setErr(null); setDoc(null);
+    try {
+      const res = await fetch(`${API}/reconstruct`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          session_id: sessionId, 
+          page_numbers: null,
+          ocr_engine: ocrEngine,
+          nvidia_api_key: nvidiaApiKey
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Reconstruction failed");
+      setDoc(data);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId, ocrEngine, nvidiaApiKey]);
+
+  useEffect(() => {
+    runReconstruction();
+  }, []); // Run once on mount
+
+  const setText = (id, text) => setEdits(prev => ({ ...prev, [id]: { text } }));
+  const setCell = (id, rows, r, c, value) => {
+    const next = rows.map(row => row.slice());
+    next[r][c] = value;
+    setEdits(prev => ({ ...prev, [id]: { rows: next } }));
+  };
+  const rowsFor = (el) => (edits[el.id] && edits[el.id].rows) || el.rows || [];
+  const textFor = (el) => (edits[el.id] && edits[el.id].text !== undefined)
+    ? edits[el.id].text : (el.text || "");
+
+  const download = async () => {
+    setSaving(true); setErr(null);
+    try {
+      const res = await fetch(`${API}/reconstruct/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, edits }),
+      });
+      if (!res.ok) {
+        let msg = "Save failed";
+        try { msg = (await res.json()).detail || msg; } catch {}
+        throw new Error(msg);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reconstructed_${filename || "document.pdf"}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const pageImg = (pageNum) => {
+    const pg = pages.find(p => p.page_number === pageNum);
+    return pg ? `data:image/png;base64,${pg.image_b64}` : null;
+  };
+
+  const cellStyle = {
+    border: "1px solid #334155", padding: "4px 8px", fontSize: 12,
+    color: "#0f172a", background: "#fff", minWidth: 60,
+  };
+
+  return (
+    <div style={{ width: "100%", maxWidth: 1200 }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: 16, gap: 12,
+      }}>
+        <button onClick={onBack} style={{
+          background: "#1e293b", color: "#cbd5e1", border: "1px solid #334155",
+          borderRadius: 6, padding: "7px 14px", fontSize: 13, cursor: "pointer",
+        }}>&larr; Change mode</button>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <select 
+            value={ocrEngine} 
+            onChange={e => setOcrEngine(e.target.value)}
+            style={{ ...inputStyle, width: "auto" }}
+          >
+            <option value="nemotron">Nemotron OCR v2 (NVIDIA)</option>
+            <option value="tesseract">Tesseract (Local)</option>
+          </select>
+          {ocrEngine === "nemotron" && (
+            <input 
+              type="password" 
+              placeholder="Provider API Key" 
+              value={nvidiaApiKey}
+              onChange={e => setNvidiaApiKey(e.target.value)}
+              style={{ ...inputStyle, width: 200 }}
+            />
+          )}
+          <button onClick={runReconstruction} disabled={loading} style={{
+            background: loading ? "#334155" : "#10b981",
+            color: "#fff", border: "none", borderRadius: 6, padding: "7px 16px",
+            fontSize: 13, fontWeight: 700,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}>
+            {loading ? "Running..." : "Run OCR"}
+          </button>
+          
+          <button onClick={download} disabled={saving || loading || !doc} style={{
+            background: saving || loading || !doc ? "#334155" : "#6366f1",
+            color: "#fff", border: "none", borderRadius: 6, padding: "7px 16px",
+            fontSize: 13, fontWeight: 700,
+            cursor: saving || loading || !doc ? "not-allowed" : "pointer",
+          }}>
+            {saving ? "Generating..." : "Download Reconstructed PDF"}
+          </button>
+        </div>
+      </div>
+
+      {err && (
+        <div style={{ background: "#450a0a", color: "#fca5a5", borderRadius: 6, padding: "8px 10px", fontSize: 12, marginBottom: 12 }}>
+          {err}
+        </div>
+      )}
+      {loading && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginTop: 60 }}>
+          <Spinner />
+          <div style={{ color: "#64748b", fontSize: 13 }}>Analysing layout &amp; reconstructing document...</div>
+        </div>
+      )}
+
+      {doc && doc.pages.map(page => (
+        <div key={page.page} style={{
+          display: "flex", gap: 20, marginBottom: 32,
+          alignItems: "flex-start",
+        }}>
+          {/* Left: original scan */}
+          <div style={{ flex: "0 0 46%" }}>
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 6 }}>Original (page {page.page + 1})</div>
+            {pageImg(page.page) && (
+              <img src={pageImg(page.page)} alt={`page ${page.page + 1}`}
+                style={{ width: "100%", border: "1px solid #1e293b", borderRadius: 6 }} />
+            )}
+          </div>
+          {/* Right: editable structured view */}
+          <div style={{
+            flex: 1, background: "#f8fafc", color: "#0f172a", borderRadius: 6,
+            padding: 24, minHeight: 200,
+          }}>
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 10 }}>Editable content</div>
+            {page.elements.map(el => {
+              if (el.type === "table") {
+                const rows = rowsFor(el);
+                return (
+                  <table key={el.id} style={{ borderCollapse: "collapse", margin: "10px 0", width: "100%" }}>
+                    <tbody>
+                      {rows.map((row, ri) => (
+                        <tr key={ri}>
+                          {row.map((cell, ci) => (
+                            <td key={ci} style={cellStyle}
+                              contentEditable suppressContentEditableWarning
+                              onBlur={e => setCell(el.id, rows, ri, ci, e.currentTarget.textContent)}>
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                );
+              }
+              const isHeader = el.type === "header";
+              return (
+                <textarea
+                  key={el.id}
+                  value={textFor(el)}
+                  onChange={e => setText(el.id, e.target.value)}
+                  rows={isHeader ? 1 : Math.max(1, (textFor(el).match(/\n/g) || []).length + 1)}
+                  style={{
+                    display: "block", width: "100%", border: "1px solid transparent",
+                    borderRadius: 4, padding: "4px 6px", margin: isHeader ? "12px 0 6px" : "6px 0",
+                    fontSize: isHeader ? Math.min(el.font_size || 18, 26) : (el.font_size || 12),
+                    fontWeight: isHeader || el.bold ? 700 : 400,
+                    color: el.color || "#0f172a", background: "transparent",
+                    resize: "vertical", lineHeight: 1.4, fontFamily: "inherit",
+                  }}
+                  onFocus={e => e.target.style.border = "1px solid #6366f1"}
+                  onBlur={e => e.target.style.border = "1px solid transparent"}
+                />
+              );
+            })}
+            {page.elements.length === 0 && (
+              <div style={{ color: "#94a3b8", fontSize: 13 }}>No content detected on this page.</div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function App() {
   const [docInfo, setDocInfo] = useState(null);
@@ -437,7 +853,58 @@ export default function App() {
   const [editedBlocks, setEditedBlocks] = useState({});   // id -> partial overrides
   const [scale, setScale] = useState(1.0);
   const [dragOver, setDragOver] = useState(false);
+  const [editMode, setEditMode] = useState("standard");
+  const [aiEditProvider, setAiEditProvider] = useState("gemini"); // 'gemini' | 'nvidia'
+  const [aiEditApiKey, setAiEditApiKey] = useState("");
+  const [nvidiaApiKey, setNvidiaApiKey] = useState(""); // used by Reconstruct/OCR panel (Nemotron)
+  const [aiReplacementText, setAiReplacementText] = useState("");
+  const [aiPadding, setAiPadding] = useState(8);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPreview, setAiPreview] = useState(null);
+  const [aiError, setAiError] = useState(null);
+  const [aiMessage, setAiMessage] = useState(null);
+  const [scanEditMode, setScanEditMode] = useState(null);  // 'reconstruct' | 'ai_image'
   const fileInputRef = useRef(null);
+
+  // Load API keys on mount
+  useEffect(() => {
+    const savedProvider = localStorage.getItem("pdfedit_ai_edit_provider");
+    if (savedProvider === "gemini" || savedProvider === "replicate") {
+      setAiEditProvider(savedProvider);
+    }
+    const initialProvider = (savedProvider === "gemini" || savedProvider === "replicate")
+      ? savedProvider : "gemini";
+    const savedKey = localStorage.getItem(`pdfedit_ai_edit_key_${initialProvider}`);
+    if (savedKey) setAiEditApiKey(savedKey);
+
+    const savedNvidia = localStorage.getItem("pdfedit_nvidia_api_key");
+    if (savedNvidia) setNvidiaApiKey(savedNvidia);
+  }, []);
+
+  // When the provider dropdown changes, swap in that provider's saved key
+  // (rather than clearing the field or leaking the other provider's key in).
+  useEffect(() => {
+    localStorage.setItem("pdfedit_ai_edit_provider", aiEditProvider);
+    const savedKey = localStorage.getItem(`pdfedit_ai_edit_key_${aiEditProvider}`) || "";
+    setAiEditApiKey(savedKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiEditProvider]);
+
+  useEffect(() => {
+    if (aiEditApiKey) {
+      localStorage.setItem(`pdfedit_ai_edit_key_${aiEditProvider}`, aiEditApiKey);
+    } else {
+      localStorage.removeItem(`pdfedit_ai_edit_key_${aiEditProvider}`);
+    }
+  }, [aiEditApiKey, aiEditProvider]);
+
+  useEffect(() => {
+    if (nvidiaApiKey) {
+      localStorage.setItem("pdfedit_nvidia_api_key", nvidiaApiKey);
+    } else {
+      localStorage.removeItem("pdfedit_nvidia_api_key");
+    }
+  }, [nvidiaApiKey]);
 
   // For the properties panel, show the first selected block
   const primarySelectedId = selectedBlockIds.size > 0 ? [...selectedBlockIds][0] : null;
@@ -462,6 +929,10 @@ export default function App() {
     setDocInfo(null);
     setSelectedBlockIds(new Set());
     setEditedBlocks({});
+    setAiPreview(null);
+    setAiError(null);
+    setAiMessage(null);
+    setScanEditMode(null);
 
     try {
       const form = new FormData();
@@ -493,9 +964,14 @@ export default function App() {
   const handleSelectBlock = (block) => {
     if (block) {
       setSelectedBlockIds(new Set([block.id]));
+      setAiReplacementText(block.text || "");
     } else {
       setSelectedBlockIds(new Set());
+      setAiReplacementText("");
     }
+    setAiPreview(null);
+    setAiError(null);
+    setAiMessage(null);
   };
 
   const handleRectSelect = (blocks) => {
@@ -512,6 +988,47 @@ export default function App() {
       }
       return next;
     });
+  };
+
+  const handleAiReplace = async () => {
+    if (!docInfo || !selectedBlock) return;
+    setAiLoading(true);
+    setAiError(null);
+    setAiMessage(null);
+
+    try {
+      const res = await fetch(`${API}/ai-edit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: docInfo.session_id,
+          page_number: selectedBlock.page,
+          bbox: {
+            x: selectedBlock.x,
+            y: selectedBlock.y,
+            width: selectedBlock.width,
+            height: selectedBlock.height,
+          },
+          original_text: selectedBlock.text,
+          replacement_text: aiReplacementText,
+          padding: aiPadding,
+          gemini_api_key: aiEditProvider === "gemini" ? aiEditApiKey : null,
+          replicate_api_key: aiEditProvider === "replicate" ? aiEditApiKey : null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "AI edit preparation failed");
+      }
+
+      setAiPreview(data);
+      setAiMessage(data.message || "AI edit crop prepared.");
+    } catch (err) {
+      setAiError(err.message);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -539,6 +1056,11 @@ export default function App() {
           font_name: merged.font_name,
           font_size: merged.font_size,
           color: merged.color,
+          background_color: merged.background_color,
+          is_ai_edit: merged.is_ai_edit || false,
+          edit_id: merged.edit_id || null,
+          baseline: merged.baseline ?? null,
+          pdf_font: merged.pdf_font ?? null,
         };
       }).filter(Boolean);
 
@@ -580,6 +1102,24 @@ export default function App() {
         hasDoc={!!docInfo}
       />
 
+      {docInfo && docInfo.is_scanned && scanEditMode === null && !loading && (
+        <ScanModeModal
+          onReconstruct={() => setScanEditMode("reconstruct")}
+          onAiImage={() => setScanEditMode("ai_image")}
+        />
+      )}
+
+      {aiLoading && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(2,6,23,0.6)",
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", gap: 14, zIndex: 60,
+        }}>
+          <Spinner />
+          <div style={{ color: "#e2e8f0", fontSize: 14 }}>AI is editing the page...</div>
+        </div>
+      )}
+
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
         {/* ── Left sidebar: upload / status ─────────────────────────────── */}
@@ -614,15 +1154,27 @@ export default function App() {
                   {docInfo.pages.reduce((n, p) => n + p.text_blocks.length, 0)} editable text block
                   {docInfo.pages.reduce((n, p) => n + p.text_blocks.length, 0) !== 1 ? "s" : ""}
                 </div>
-                {docInfo.is_scanned && <div style={{ color: "#f59e0b", marginTop: 4 }}>⚡ Contains scanned pages</div>}
+                {docInfo.is_scanned && <div style={{ color: "#f59e0b", marginTop: 4 }}>Contains scanned pages</div>}
+                {docInfo.is_scanned && scanEditMode && (
+                  <div style={{ marginTop: 6 }}>
+                    <span style={{ color: "#94a3b8" }}>
+                      Mode: {scanEditMode === "reconstruct" ? "Reconstruct & Edit" : "AI Image Edit"}
+                    </span>
+                    <button onClick={() => setScanEditMode(null)} style={{
+                      marginLeft: 8, background: "none", border: "none",
+                      color: "#6366f1", cursor: "pointer", fontSize: 11, padding: 0,
+                      textDecoration: "underline",
+                    }}>change</button>
+                  </div>
+                )}
                 {editedCount > 0 && (
                   <div style={{ color: "#10b981", marginTop: 4 }}>
-                    ✎ {editedCount} block{editedCount !== 1 ? "s" : ""} edited
+                    {editedCount} block{editedCount !== 1 ? "s" : ""} edited
                   </div>
                 )}
                 {selectedBlockIds.size > 1 && (
                   <div style={{ color: "#6366f1", marginTop: 4 }}>
-                    ⬚ {selectedBlockIds.size} blocks selected
+                    {selectedBlockIds.size} blocks selected
                   </div>
                 )}
               </div>
@@ -665,7 +1217,7 @@ export default function App() {
           {loading && (
             <div style={{ marginTop: 80, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
               <Spinner />
-              <div style={{ color: "#64748b", fontSize: 14 }}>Processing PDF…</div>
+              <div style={{ color: "#64748b", fontSize: 14 }}>Processing PDF...</div>
               <div style={{ color: "#475569", fontSize: 12 }}>
                 Scanned pages will be OCR'd automatically
               </div>
@@ -683,7 +1235,7 @@ export default function App() {
               }}
               onClick={() => fileInputRef.current?.click()}
             >
-              <div style={{ fontSize: 48 }}>📄</div>
+              <div style={{ fontSize: 48 }}>PDF</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: "#f8fafc" }}>
                 Drop your PDF here
               </div>
@@ -701,18 +1253,29 @@ export default function App() {
             </div>
           )}
 
-          {docInfo && docInfo.pages.map(page => (
-            <PDFPage
-              key={page.page_number}
-              pageInfo={page}
-              scale={scale}
-              activeTool={activeTool}
-              selectedIds={selectedBlockIds}
-              onSelectBlock={handleSelectBlock}
-              onRectSelect={handleRectSelect}
-              editedBlocks={editedBlocks}
+          {docInfo && scanEditMode === "reconstruct" ? (
+            <ReconstructEditor
+              sessionId={docInfo.session_id}
+              pages={docInfo.pages}
+              filename={docInfo.filename}
+              onBack={() => setScanEditMode(null)}
+              nvidiaApiKey={nvidiaApiKey}
+              setNvidiaApiKey={setNvidiaApiKey}
             />
-          ))}
+          ) : (
+            docInfo && docInfo.pages.map(page => (
+              <PDFPage
+                key={page.page_number}
+                pageInfo={page}
+                scale={scale}
+                activeTool={activeTool}
+                selectedIds={selectedBlockIds}
+                onSelectBlock={handleSelectBlock}
+                onRectSelect={handleRectSelect}
+                editedBlocks={editedBlocks}
+              />
+            ))
+          )}
         </div>
 
         {/* ── Right sidebar: properties ──────────────────────────────────── */}
@@ -730,6 +1293,21 @@ export default function App() {
           <PropertiesPanel
             selectedBlock={selectedBlock}
             onUpdate={handleUpdateBlock}
+            editMode={editMode}
+            setEditMode={setEditMode}
+            aiReplacementText={aiReplacementText}
+            setAiReplacementText={setAiReplacementText}
+            aiPadding={aiPadding}
+            setAiPadding={setAiPadding}
+            aiEditProvider={aiEditProvider}
+            setAiEditProvider={setAiEditProvider}
+            aiEditApiKey={aiEditApiKey}
+            setAiEditApiKey={setAiEditApiKey}
+            onAiReplace={handleAiReplace}
+            aiLoading={aiLoading}
+            aiPreview={aiPreview}
+            aiError={aiError}
+            aiMessage={aiMessage}
           />
         </div>
       </div>
