@@ -43,11 +43,15 @@ def build_editable_document(
                 "bold": elem.get("bold", False),
                 "color": elem.get("color", "#000000"),
             }
+            if "img_path" in elem:
+                entry["img_path"] = elem["img_path"]
 
             if elem["type"] == "table":
                 entry["rows"] = elem.get("rows", [])
                 entry["col_widths"] = elem.get("col_widths", [])
                 entry["col_positions"] = elem.get("col_positions", [])
+            elif elem["type"] == "image":
+                entry["img_path"] = elem.get("img_path", "")
             elif elem["type"] == "list":
                 # Derive items from text lines when the detector didn't supply them.
                 items = elem.get("items") or [l for l in text.split("\n") if l.strip()]

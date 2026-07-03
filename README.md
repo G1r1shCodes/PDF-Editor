@@ -79,6 +79,8 @@ Run the backend:
 
 ```powershell
 ./venv/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+
+python -m uvicorn main:app --host 127.0.0.1 --port 8000s
 ```
 
 If port 8000 is already in use, either stop the old backend process or use another port and set `VITE_API_URL` for the frontend.

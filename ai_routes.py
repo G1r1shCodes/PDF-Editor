@@ -45,31 +45,28 @@ class AiEditPrepareResponse(BaseModel):
 
 def _gather_context_text(page: "fitz.Page", page_number: int, bbox: dict,
                          radius_pt: float = 50.0) -> str:
-    """Collect OCR words near the target bbox (within `radius_pt` points).
+    """Collect words near the target bbox (within `radius_pt` points).
 
+    Uses PyMuPDF's native word extraction (no OCR dependency).
     Provides the AI with surrounding text so it can better match font styling.
-    Returns an empty string if OCR is unavailable or nothing is nearby.
+    Returns an empty string if nothing is nearby.
     """
-    try:
-        from ocr.extraction import extract_ocr_blocks
-    except Exception:
-        return ""
-
     tx0 = bbox["x"] - radius_pt
     ty0 = bbox["y"] - radius_pt
     tx1 = bbox["x"] + bbox["width"] + radius_pt
     ty1 = bbox["y"] + bbox["height"] + radius_pt
 
     try:
-        words = extract_ocr_blocks(page, page_number, dpi=300)
+        # get_text("words") returns list of (x0, y0, x1, y1, word, block, line, word_no)
+        words = page.get_text("words")
     except Exception:
         return ""
 
     nearby = []
     for w in words:
-        wb = w.get("bbox", {})
-        cx = wb.get("x", 0) + wb.get("width", 0) / 2
-        cy = wb.get("y", 0) + wb.get("height", 0) / 2
+        x0, y0, x1, y1, word_text = w[0], w[1], w[2], w[3], w[4]
+        cx = (x0 + x1) / 2
+        cy = (y0 + y1) / 2
         # word centre inside the expanded window, but exclude the target itself
         if tx0 <= cx <= tx1 and ty0 <= cy <= ty1:
             inside_target = (
@@ -77,7 +74,7 @@ def _gather_context_text(page: "fitz.Page", page_number: int, bbox: dict,
                 and bbox["y"] <= cy <= bbox["y"] + bbox["height"]
             )
             if not inside_target:
-                nearby.append(w.get("text", ""))
+                nearby.append(word_text)
 
     text = " ".join(t for t in nearby if t).strip()
     # Keep the prompt compact.

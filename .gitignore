@@ -42,3 +42,17 @@ MANIFEST
 # OS
 .DS_Store
 Thumbs.db
+
+# Project-specific temp/generated
+tmp_pdf_editor/
+static/images/
+static/exports/
+scratch/
+help.txt
+*.pdf
+!requirements*.txt
+
+# Logs and Tests
+*_log.txt
+test_*.py
+tmp_out_test/

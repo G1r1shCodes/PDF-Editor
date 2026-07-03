@@ -1,0 +1,12 @@
+# Optional: install only if you want the MinerU reconstruction engine.
+# Kept separate from requirements.txt because MinerU pulls in heavy
+# dependencies (torch, paddleocr/paddlepaddle, doclayout models, etc.)
+# that lightweight deployments of this app won't need.
+#
+#   pip install -r requirements-mineru.txt
+#
+# GPU users: follow MinerU's own docs to install a CUDA-matched torch
+# build first, then run the line below (it will not reinstall torch if
+# a compatible version is already present).
+
+mineru[core]>=1.3.0

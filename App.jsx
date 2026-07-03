@@ -1,5 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 const API = import.meta.env.VITE_API_URL || "/api";
 
 // The backend renders page images at 150 DPI but returns text coordinates
@@ -388,7 +391,7 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
       for (let i = blocks.length - 1; i >= 0; i--) {
         const b = blocks[i];
         if (pt.x >= b.x - 2 && pt.x <= b.x + b.width + 6 &&
-            pt.y >= b.y - 2 && pt.y <= b.y + b.height + 6) {
+          pt.y >= b.y - 2 && pt.y <= b.y + b.height + 6) {
           found = b;
           break;
         }
@@ -418,7 +421,7 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
       for (let i = blocks.length - 1; i >= 0; i--) {
         const b = blocks[i];
         if (pt.x >= b.x - 2 && pt.x <= b.x + b.width + 6 &&
-            pt.y >= b.y - 2 && pt.y <= b.y + b.height + 6) {
+          pt.y >= b.y - 2 && pt.y <= b.y + b.height + 6) {
           found = b;
           break;
         }
@@ -430,7 +433,7 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
         const bRight = b.x + b.width;
         const bBottom = b.y + b.height;
         return b.x < rectRight && bRight > rectLeft &&
-               b.y < rectBottom && bBottom > rectTop;
+          b.y < rectBottom && bBottom > rectTop;
       });
       if (hits.length > 0) {
         onRectSelect(hits);
@@ -588,10 +591,10 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
 
 
 // ── Scan edit-mode selection modal ────────────────────────────────────────────
-function ScanModeModal({ onReconstruct, onAiImage }) {
+function ScanModeModal({ onReconstruct, onAiImage, mineruBackend, setMineruBackend, mineruEffort, setMineruEffort, nvidiaApiKey, setNvidiaApiKey }) {
   const card = {
     flex: 1, background: "#0f172a", border: "1px solid #1e293b",
-    borderRadius: 12, padding: 20, cursor: "pointer", textAlign: "left",
+    borderRadius: 12, padding: 20, textAlign: "left",
     color: "#f8fafc", display: "flex", flexDirection: "column", gap: 8,
   };
   return (
@@ -608,22 +611,69 @@ function ScanModeModal({ onReconstruct, onAiImage }) {
           You can pick a different mode at any time from the left sidebar.
         </div>
         <div style={{ display: "flex", gap: 16 }}>
-          <button style={card} onClick={onReconstruct}>
+          <div style={card}>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#818cf8" }}>Reconstruct &amp; Edit</div>
-            <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
-              Extract the page structure (headings, paragraphs, tables) into an
-              editable document, then regenerate a clean PDF. Output is crisp
-              digital text on a white background — the scanned look is dropped.
+            <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5, marginBottom: 12 }}>
+              Extract the page structure (headings, paragraphs, tables) into an editable document.
             </div>
-          </button>
-          <button style={card} onClick={onAiImage}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#34d399" }}>AI Image Edit</div>
-            <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
-              Select a region and let AI re-render just that text while keeping
-              the scan texture, fonts and surrounding content. Best when you want
-              to preserve the original scanned appearance.
+
+            <div style={{ background: "#020617", padding: 12, borderRadius: 8, border: "1px solid #1e293b", marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 6, fontWeight: 700, textTransform: "uppercase" }}>OCR Engine Settings</div>
+              <div style={{ display: "flex", gap: 12, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 11, color: "#cbd5e1", display: "block", marginBottom: 4 }}>MinerU Backend</label>
+                  <select value={mineruBackend} onChange={e => setMineruBackend(e.target.value)} style={{ width: "100%", background: "#0f172a", color: "#f8fafc", border: "1px solid #334155", borderRadius: 4, padding: "4px 8px", fontSize: 12 }}>
+                    <option value="pipeline">Pipeline (100% Offline / Fast)</option>
+                    <option value="hybrid-http-client">Hybrid (Uses NVIDIA NIM for Charts)</option>
+                    <option value="vlm-http-client">VLM Engine (Uses NVIDIA NIM for all pages)</option>
+                  </select>
+                </div>
+
+                {(mineruBackend === "hybrid-http-client" || mineruBackend === "vlm-http-client") && (
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 11, color: "#cbd5e1", display: "block", marginBottom: 4 }}>NVIDIA NIM API Key</label>
+                    <input
+                      type="password"
+                      placeholder="nvapi-..."
+                      value={nvidiaApiKey}
+                      onChange={e => setNvidiaApiKey(e.target.value)}
+                      style={{ width: "100%", background: "#0f172a", color: "#f8fafc", border: "1px solid #334155", borderRadius: 4, padding: "4px 8px", fontSize: 12 }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {(mineruBackend !== "hybrid-http-client" && mineruBackend !== "vlm-http-client") && (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 11, color: "#cbd5e1", display: "block", marginBottom: 4 }}>Effort Level</label>
+                    <select value={mineruEffort} onChange={e => setMineruEffort(e.target.value)} style={{ width: "100%", background: "#0f172a", color: "#f8fafc", border: "1px solid #334155", borderRadius: 4, padding: "4px 8px", fontSize: 12 }}>
+                      <option value="medium">Medium (Fast, Text-only)</option>
+                      <option value="high">High (Includes Image/Chart Analysis)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }} />
+                </div>
+              )}
             </div>
-          </button>
+
+            <button onClick={onReconstruct} style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%" }}>
+              Start Reconstruction
+            </button>
+          </div>
+          <div style={{ ...card, justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#34d399" }}>AI Image Edit</div>
+              <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5 }}>
+                Select a region and let AI re-render just that text while keeping
+                the scan texture, fonts and surrounding content. Best when you want
+                to preserve the original scanned appearance.
+              </div>
+            </div>
+            <button onClick={onAiImage} style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: 6, padding: "10px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", marginTop: 16 }}>
+              Use AI Image Edit
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -631,13 +681,13 @@ function ScanModeModal({ onReconstruct, onAiImage }) {
 }
 
 // ── Reconstruct & Edit structured editor ──────────────────────────────────────
-function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, setNvidiaApiKey }) {
+function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, setNvidiaApiKey, mineruBackend, mineruEffort }) {
   const [doc, setDoc] = useState(null);      // ReconstructedDocument
   const [edits, setEdits] = useState({});    // elementId -> { text } | { rows }
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
-  const [ocrEngine, setOcrEngine] = useState("nemotron"); // Default to nemotron
+  const [editingBlockId, setEditingBlockId] = useState(null);
 
   const runReconstruction = useCallback(async () => {
     setLoading(true); setErr(null); setDoc(null);
@@ -645,22 +695,29 @@ function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, s
       const res = await fetch(`${API}/reconstruct`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          session_id: sessionId, 
+        body: JSON.stringify({
+          session_id: sessionId,
           page_numbers: null,
-          ocr_engine: ocrEngine,
-          nvidia_api_key: nvidiaApiKey
+          ocr_engine: "mineru",
+          nvidia_api_key: nvidiaApiKey,
+          mineru_backend: mineruBackend,
+          mineru_effort: mineruEffort,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Reconstruction failed");
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        throw new Error(`Server error: ${res.status} - ${res.statusText}`);
+      }
+      if (!res.ok) throw new Error(data?.detail || "Reconstruction failed");
       setDoc(data);
     } catch (e) {
       setErr(e.message);
     } finally {
       setLoading(false);
     }
-  }, [sessionId, ocrEngine, nvidiaApiKey]);
+  }, [sessionId, nvidiaApiKey, mineruBackend, mineruEffort]);
 
   useEffect(() => {
     runReconstruction();
@@ -686,7 +743,7 @@ function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, s
       });
       if (!res.ok) {
         let msg = "Save failed";
-        try { msg = (await res.json()).detail || msg; } catch {}
+        try { msg = (await res.json()).detail || msg; } catch { }
         throw new Error(msg);
       }
       const blob = await res.blob();
@@ -724,23 +781,6 @@ function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, s
           borderRadius: 6, padding: "7px 14px", fontSize: 13, cursor: "pointer",
         }}>&larr; Change mode</button>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <select 
-            value={ocrEngine} 
-            onChange={e => setOcrEngine(e.target.value)}
-            style={{ ...inputStyle, width: "auto" }}
-          >
-            <option value="nemotron">Nemotron OCR v2 (NVIDIA)</option>
-            <option value="tesseract">Tesseract (Local)</option>
-          </select>
-          {ocrEngine === "nemotron" && (
-            <input 
-              type="password" 
-              placeholder="Provider API Key" 
-              value={nvidiaApiKey}
-              onChange={e => setNvidiaApiKey(e.target.value)}
-              style={{ ...inputStyle, width: 200 }}
-            />
-          )}
           <button onClick={runReconstruction} disabled={loading} style={{
             background: loading ? "#334155" : "#10b981",
             color: "#fff", border: "none", borderRadius: 6, padding: "7px 16px",
@@ -749,15 +789,26 @@ function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, s
           }}>
             {loading ? "Running..." : "Run OCR"}
           </button>
-          
-          <button onClick={download} disabled={saving || loading || !doc} style={{
-            background: saving || loading || !doc ? "#334155" : "#6366f1",
-            color: "#fff", border: "none", borderRadius: 6, padding: "7px 16px",
-            fontSize: 13, fontWeight: 700,
-            cursor: saving || loading || !doc ? "not-allowed" : "pointer",
-          }}>
-            {saving ? "Generating..." : "Download Reconstructed PDF"}
-          </button>
+
+          <div style={{ flex: 1, display: "flex", gap: 12 }}>
+            <button
+              onClick={() => window.open(`${API}/export/${sessionId}`, "_blank")}
+              style={{
+                background: "#334155", color: "#f8fafc", border: "1px solid #475569", borderRadius: 6,
+                padding: "6px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              Download Markdown
+            </button>
+            <button onClick={download} disabled={saving || loading || !doc} style={{
+              background: saving || loading || !doc ? "#334155" : "#6366f1",
+              color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px",
+              fontSize: 13, fontWeight: 700,
+              cursor: saving || loading || !doc ? "not-allowed" : "pointer",
+            }}>
+              {saving ? "Generating..." : "Download PDF"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -813,24 +864,57 @@ function ReconstructEditor({ sessionId, pages, filename, onBack, nvidiaApiKey, s
                   </table>
                 );
               }
+              if (el.type === "image") {
+                const src = el.img_path ? `${API}/images/${el.img_path.split('/').pop()}` : null;
+                return src ? (
+                  <div key={el.id} style={{ margin: "16px 0", textAlign: "center" }}>
+                    <img src={src} alt="Extracted content" style={{ maxWidth: "100%", borderRadius: 6, border: "1px solid #e2e8f0" }} />
+                  </div>
+                ) : null;
+              }
+
+              const isEditing = editingBlockId === el.id;
               const isHeader = el.type === "header";
+              const textVal = textFor(el);
+
+              if (isEditing) {
+                return (
+                  <textarea
+                    key={el.id}
+                    value={textVal}
+                    autoFocus
+                    onChange={e => setText(el.id, e.target.value)}
+                    rows={isHeader ? 1 : Math.max(2, (textVal.match(/\n/g) || []).length + 1)}
+                    style={{
+                      display: "block", width: "100%", border: "1px solid #6366f1",
+                      borderRadius: 4, padding: "8px", margin: "8px 0",
+                      fontSize: 14, color: "#0f172a", background: "#fff",
+                      resize: "vertical", lineHeight: 1.5, fontFamily: "monospace",
+                    }}
+                    onBlur={() => setEditingBlockId(null)}
+                  />
+                );
+              }
+
               return (
-                <textarea
+                <div
                   key={el.id}
-                  value={textFor(el)}
-                  onChange={e => setText(el.id, e.target.value)}
-                  rows={isHeader ? 1 : Math.max(1, (textFor(el).match(/\n/g) || []).length + 1)}
+                  onClick={() => setEditingBlockId(el.id)}
                   style={{
-                    display: "block", width: "100%", border: "1px solid transparent",
-                    borderRadius: 4, padding: "4px 6px", margin: isHeader ? "12px 0 6px" : "6px 0",
-                    fontSize: isHeader ? Math.min(el.font_size || 18, 26) : (el.font_size || 12),
-                    fontWeight: isHeader || el.bold ? 700 : 400,
-                    color: el.color || "#0f172a", background: "transparent",
-                    resize: "vertical", lineHeight: 1.4, fontFamily: "inherit",
+                    margin: isHeader ? "16px 0 8px" : "8px 0", padding: "4px 8px",
+                    cursor: "text", border: "1px solid transparent", borderRadius: 4,
                   }}
-                  onFocus={e => e.target.style.border = "1px solid #6366f1"}
-                  onBlur={e => e.target.style.border = "1px solid transparent"}
-                />
+                  onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  title="Click to edit raw markdown"
+                >
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
+                    {textVal || (isHeader ? "# Empty Header" : "")}
+                  </ReactMarkdown>
+                </div>
               );
             })}
             {page.elements.length === 0 && (
@@ -851,7 +935,7 @@ export default function App() {
   const [activeTool, setActiveTool] = useState("edit");
   const [selectedBlockIds, setSelectedBlockIds] = useState(new Set());
   const [editedBlocks, setEditedBlocks] = useState({});   // id -> partial overrides
-  const [scale, setScale] = useState(1.0);
+  const [scale, setScale] = useState(1.5);
   const [dragOver, setDragOver] = useState(false);
   const [editMode, setEditMode] = useState("standard");
   const [aiEditProvider, setAiEditProvider] = useState("gemini"); // 'gemini' | 'nvidia'
@@ -864,45 +948,47 @@ export default function App() {
   const [aiError, setAiError] = useState(null);
   const [aiMessage, setAiMessage] = useState(null);
   const [scanEditMode, setScanEditMode] = useState(null);  // 'reconstruct' | 'ai_image'
+  const [mineruBackend, setMineruBackend] = useState("pipeline");
+  const [mineruEffort, setMineruEffort] = useState("medium");
   const fileInputRef = useRef(null);
 
   // Load API keys on mount
   useEffect(() => {
-    const savedProvider = localStorage.getItem("pdfedit_ai_edit_provider");
+    const savedProvider = sessionStorage.getItem("pdfedit_ai_edit_provider");
     if (savedProvider === "gemini" || savedProvider === "replicate") {
       setAiEditProvider(savedProvider);
     }
     const initialProvider = (savedProvider === "gemini" || savedProvider === "replicate")
       ? savedProvider : "gemini";
-    const savedKey = localStorage.getItem(`pdfedit_ai_edit_key_${initialProvider}`);
+    const savedKey = sessionStorage.getItem(`pdfedit_ai_edit_key_${initialProvider}`);
     if (savedKey) setAiEditApiKey(savedKey);
 
-    const savedNvidia = localStorage.getItem("pdfedit_nvidia_api_key");
+    const savedNvidia = sessionStorage.getItem("pdfedit_nvidia_api_key");
     if (savedNvidia) setNvidiaApiKey(savedNvidia);
   }, []);
 
   // When the provider dropdown changes, swap in that provider's saved key
   // (rather than clearing the field or leaking the other provider's key in).
   useEffect(() => {
-    localStorage.setItem("pdfedit_ai_edit_provider", aiEditProvider);
-    const savedKey = localStorage.getItem(`pdfedit_ai_edit_key_${aiEditProvider}`) || "";
+    sessionStorage.setItem("pdfedit_ai_edit_provider", aiEditProvider);
+    const savedKey = sessionStorage.getItem(`pdfedit_ai_edit_key_${aiEditProvider}`) || "";
     setAiEditApiKey(savedKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiEditProvider]);
 
   useEffect(() => {
     if (aiEditApiKey) {
-      localStorage.setItem(`pdfedit_ai_edit_key_${aiEditProvider}`, aiEditApiKey);
+      sessionStorage.setItem(`pdfedit_ai_edit_key_${aiEditProvider}`, aiEditApiKey);
     } else {
-      localStorage.removeItem(`pdfedit_ai_edit_key_${aiEditProvider}`);
+      sessionStorage.removeItem(`pdfedit_ai_edit_key_${aiEditProvider}`);
     }
   }, [aiEditApiKey, aiEditProvider]);
 
   useEffect(() => {
     if (nvidiaApiKey) {
-      localStorage.setItem("pdfedit_nvidia_api_key", nvidiaApiKey);
+      sessionStorage.setItem("pdfedit_nvidia_api_key", nvidiaApiKey);
     } else {
-      localStorage.removeItem("pdfedit_nvidia_api_key");
+      sessionStorage.removeItem("pdfedit_nvidia_api_key");
     }
   }, [nvidiaApiKey]);
 
@@ -1017,9 +1103,14 @@ export default function App() {
         }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        throw new Error(`Server error: ${res.status} - ${res.statusText}`);
+      }
       if (!res.ok) {
-        throw new Error(data.detail || "AI edit preparation failed");
+        throw new Error(data?.detail || "AI edit preparation failed");
       }
 
       setAiPreview(data);
@@ -1106,6 +1197,12 @@ export default function App() {
         <ScanModeModal
           onReconstruct={() => setScanEditMode("reconstruct")}
           onAiImage={() => setScanEditMode("ai_image")}
+          mineruBackend={mineruBackend}
+          setMineruBackend={setMineruBackend}
+          mineruEffort={mineruEffort}
+          setMineruEffort={setMineruEffort}
+          nvidiaApiKey={nvidiaApiKey}
+          setNvidiaApiKey={setNvidiaApiKey}
         />
       )}
 
@@ -1261,6 +1358,8 @@ export default function App() {
               onBack={() => setScanEditMode(null)}
               nvidiaApiKey={nvidiaApiKey}
               setNvidiaApiKey={setNvidiaApiKey}
+              mineruBackend={mineruBackend}
+              mineruEffort={mineruEffort}
             />
           ) : (
             docInfo && docInfo.pages.map(page => (

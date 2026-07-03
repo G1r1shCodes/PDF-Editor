@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -19,21 +19,16 @@ import fitz  # PyMuPDF
 from ai_routes import AiEditPrepareResponse, prepare_ai_edit
 
 
-# Canonical Tesseract discovery lives in ocr.extraction; reuse it here.
-from ocr.extraction import find_tesseract as _find_tesseract
+HAS_OCR = False # Local OCR via Tesseract removed. All OCR goes through MinerU or NIM.
 
+from fastapi.staticfiles import StaticFiles
 
-try:
-    import pytesseract
-    from PIL import Image
-    _tess_cmd = _find_tesseract()
-    if _tess_cmd:
-        pytesseract.pytesseract.tesseract_cmd = _tess_cmd
-    HAS_OCR = _tess_cmd is not None
-except ImportError:
-    HAS_OCR = False
+app = FastAPI(title="Reconstruct API", description="Combined OCR, layout, logic, and extraction")
 
-app = FastAPI(title="PDF Editor API", version="1.0.0")
+# Mount a static directory for images
+static_images_dir = Path(__file__).parent / "static" / "images"
+static_images_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/api/images", StaticFiles(directory=str(static_images_dir)), name="images")
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,7 +39,7 @@ app.add_middleware(
 )
 
 app.add_api_route(
-    "/ai-edit",
+    "/api/ai-edit",
     prepare_ai_edit,
     methods=["POST"],
     response_model=AiEditPrepareResponse,
@@ -68,7 +63,7 @@ class TextBlock(BaseModel):
     font_size: float
     font_flags: int        # bold/italic bitmask from PyMuPDF
     color: str             # hex string
-    is_ocr: bool = False   # came from Tesseract rather than embedded text
+    is_ocr: bool = False   # came from OCR rather than embedded text
     background_color: str = "#ffffff"
     baseline: Optional[float] = None   # true text baseline y (PDF points)
     pdf_font: Optional[str] = None     # original embedded font basename
@@ -117,8 +112,10 @@ class SaveRequest(BaseModel):
 class ReconstructRequest(BaseModel):
     session_id: str
     page_numbers: Optional[List[int]] = None  # None = all pages
-    ocr_engine: Optional[str] = None          # "nemotron" | "tesseract" | None/"auto"
-    nvidia_api_key: Optional[str] = None       # for Nemotron OCR v2 NIM
+    ocr_engine: Optional[str] = None          # "mineru" | None/"auto"
+    nvidia_api_key: Optional[str] = None       # for MinerU Hybrid NVIDIA NIM
+    mineru_backend: Optional[str] = "pipeline"
+    mineru_effort: Optional[str] = "medium"
 
 
 class ReconstructSaveRequest(BaseModel):
@@ -315,62 +312,13 @@ def _extract_text_blocks_native(page: fitz.Page, page_num: int) -> List[TextBloc
 
 
 def _extract_page_text_blocks(page: fitz.Page, page_num: int, likely_scanned: bool) -> List[TextBlock]:
-    """Extract native text first; use OCR only when native text is sparse."""
-    text_blocks = _extract_text_blocks_native(page, page_num)
-    if len(text_blocks) >= 3 or not likely_scanned:
-        return text_blocks
-
-    try:
-        ocr_blocks = _ocr_page(page, page_num)
-        if ocr_blocks:
-            return ocr_blocks
-    except Exception as ocr_err:
-        print(f"[WARN] OCR failed for page {page_num}: {ocr_err}")
-
-    return text_blocks
-
-
-def _ocr_page(page: fitz.Page, page_num: int) -> List[TextBlock]:
-    """Fallback OCR using Tesseract via the ocr.extraction module.
-
-    Returns word-level text blocks with bounding boxes in PDF points.
-    """
-    if not HAS_OCR:
-        print("[WARN] Tesseract not available, skipping OCR.")
-        return []
-
-    from ocr.extraction import extract_ocr_blocks
-
-    # Overlay path: deskew MUST stay off so boxes align to the un-rotated image.
-    ocr_blocks = extract_ocr_blocks(page, page_num, dpi=300, deskew=False)
-
-    blocks: List[TextBlock] = []
-    for i, ob in enumerate(ocr_blocks):
-        bbox = ob["bbox"]
-        x, y, w, h = bbox["x"], bbox["y"], bbox["width"], bbox["height"]
-        rect = fitz.Rect(x, y, x + w, y + h)
-        bg_color = _detect_background_color(page, rect)
-
-        blocks.append(TextBlock(
-            id=f"p{page_num}_b{i}_ocr",
-            page=page_num,
-            x=x, y=y, width=w, height=h,
-            text=ob["text"],
-            font_name="Helvetica",
-            font_size=ob["font_size_estimate"],
-            font_flags=0,
-            color=ob.get("color", "#000000"),
-            is_ocr=True,
-            background_color=bg_color,
-            baseline=round(y + h * 0.8, 2),
-        ))
-
-    return blocks
+    """Extract native text. Full OCR for scanned pages happens later via /reconstruct."""
+    return _extract_text_blocks_native(page, page_num)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-@app.post("/upload", response_model=DocumentInfo)
+@app.post("/api/upload", response_model=DocumentInfo)
 async def upload_pdf(file: UploadFile = File(...)):
     """
     Accept a PDF (digital or scanned).
@@ -572,7 +520,7 @@ def _draw_edit_text(page: fitz.Page, edit: "EditOperation", registry: _FontRegis
             fontname=fontname, fontsize=size, color=color,
         )
 
-@app.post("/save")
+@app.post("/api/save")
 async def save_pdf(req: SaveRequest):
     """
     Apply all user edits and return the modified PDF for download.
@@ -631,8 +579,8 @@ async def save_pdf(req: SaveRequest):
 
 # ── Reconstruct endpoints (scanned-PDF structured editing) ─────────────────────
 
-@app.post("/reconstruct")
-async def reconstruct_document(req: ReconstructRequest):
+@app.post("/api/reconstruct")
+def reconstruct_document(req: ReconstructRequest):
     """Analyse scanned pages and return a structured, editable document."""
     session_dir = UPLOAD_DIR / req.session_id
     if not session_dir.exists():
@@ -641,53 +589,53 @@ async def reconstruct_document(req: ReconstructRequest):
     pdf_path = session_dir / "original.pdf"
     doc = fitz.open(str(pdf_path))
     try:
-        from ocr.extraction import extract_ocr_blocks
-        from ocr.layout import analyse_layout
         from ocr.reconstruction import build_editable_document
-        import nemotron_ocr
+        import mineru_ocr
 
-        engine = (req.ocr_engine or "").lower()
-        # Auto-routing requires NVIDIA_OCR_URL to be explicitly set, not just an
-        # NVIDIA_API_KEY. A key alone may only be present for the separate
-        # FLUX.1-Kontext image-edit feature (nvidia_image_edit.py) and does not
-        # mean a Nemotron OCR NIM endpoint is actually reachable. Without an
-        # explicit URL, "auto" stays on Tesseract; pass ocr_engine="nemotron"
-        # to opt in once a NIM container is running.
-        explicit_nemotron_url = bool(os.environ.get("NVIDIA_OCR_URL"))
-        use_nemotron = engine == "nemotron" or (
-            engine in ("", "auto")
-            and explicit_nemotron_url
-            and nemotron_ocr.is_configured(req.nvidia_api_key)
-        )
+        engine = (req.ocr_engine or "mineru").lower()
+        if engine == "auto" or engine == "":
+            engine = "mineru"
 
-        if use_nemotron and not nemotron_ocr.is_configured(req.nvidia_api_key):
-            if not os.environ.get("NVIDIA_OCR_URL"):
-                raise HTTPException(
-                    400, 
-                    "NVIDIA API Key is required for Nemotron OCR. Please enter your key, or configure NVIDIA_OCR_URL for a local NIM."
-                )
+
+        # MinerU is local/self-hosted (no API key), so it is never auto-selected -
+        # it must be requested explicitly to avoid surprising a user who has it
+        # installed but wants a different engine.
+        use_mineru = engine == "mineru"
+
+
+
+        if use_mineru and not mineru_ocr.is_configured():
+            raise HTTPException(
+                400,
+                "MinerU is not installed on the server. Run "
+                "pip install -U \"mineru[core]\", or choose a different OCR engine."
+            )
 
         page_nums = req.page_numbers or list(range(doc.page_count))
         page_layouts = []
 
-        for pn in page_nums:
-            if pn < 0 or pn >= doc.page_count:
-                raise HTTPException(400, f"Invalid page index: {pn}")
-            page = doc[pn]
-            if use_nemotron:
-                try:
-                    ocr_blocks = nemotron_ocr.extract_ocr_blocks_nemotron(
-                        page, pn, api_key=req.nvidia_api_key
-                    )
-                except nemotron_ocr.NemotronOCRError as e:
-                    raise HTTPException(400, f"Nemotron OCR error: {e}")
-            else:
-                # Tesseract path; reconstruct regenerates a clean PDF, deskew safe.
-                ocr_blocks = extract_ocr_blocks(page, pn, dpi=300, deskew=True)
-            layout = analyse_layout(
-                ocr_blocks, page.rect.width, page.rect.height, page_num=pn
-            )
-            page_layouts.append(layout)
+        if use_mineru:
+            try:
+                backend = req.mineru_backend or "pipeline"
+                effort = req.mineru_effort or "medium"
+                
+                if "http-client" in backend and not req.nvidia_api_key:
+                    raise HTTPException(400, "API Key is required for Hybrid/VLM modes")
+                    
+                page_layouts, md_content = mineru_ocr.extract_layouts_mineru_bulk(
+                    doc, page_nums, backend=backend, effort=effort, nvidia_api_key=req.nvidia_api_key
+                )
+                
+                # Save Markdown export
+                if md_content:
+                    export_dir = Path(__file__).parent / "static" / "exports"
+                    export_dir.mkdir(parents=True, exist_ok=True)
+                    (export_dir / f"{req.session_id}.md").write_text(md_content, encoding="utf-8")
+                    
+            except mineru_ocr.MinerUOCRError as e:
+                raise HTTPException(400, f"MinerU OCR error: {e}")
+        else:
+            raise HTTPException(400, f"Unsupported OCR engine: {engine}")
 
         document = build_editable_document(page_layouts)
 
@@ -697,11 +645,17 @@ async def reconstruct_document(req: ReconstructRequest):
         cache_path.write_text(json.dumps(document, indent=2), encoding="utf-8")
 
         return document
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Reconstruction failed: {str(e)}")
     finally:
         doc.close()
 
 
-@app.post("/reconstruct/save")
+@app.post("/api/reconstruct/save")
 async def save_reconstructed(req: ReconstructSaveRequest):
     """Apply user edits to the cached reconstruction and generate a new PDF."""
     session_dir = UPLOAD_DIR / req.session_id
@@ -720,12 +674,26 @@ async def save_reconstructed(req: ReconstructSaveRequest):
     edited_doc = apply_edits(document, req.edits)
 
     out_path = session_dir / "reconstructed.pdf"
-    generate_pdf(edited_doc, out_path)
+    await generate_pdf(edited_doc, out_path)
 
     return FileResponse(
         str(out_path),
         media_type="application/pdf",
         filename="reconstructed.pdf",
+    )
+
+
+@app.get("/api/export/{session_id}")
+async def export_markdown(session_id: str):
+    """Download the raw Markdown file generated by MinerU."""
+    export_path = Path(__file__).parent / "static" / "exports" / f"{session_id}.md"
+    if not export_path.exists():
+        raise HTTPException(404, "Markdown export not found. Did you reconstruct this document using MinerU?")
+        
+    return FileResponse(
+        str(export_path),
+        media_type="text/markdown",
+        filename="document.md",
     )
 
 
@@ -764,7 +732,7 @@ def _clean_fontname(name: str) -> str:
     return "helv"
 
 
-@app.get("/fonts")
+@app.get("/api/fonts")
 def list_fonts():
     """Return the set of fonts the editor can render with."""
     return {
@@ -781,7 +749,7 @@ def list_fonts():
     }
 
 
-@app.delete("/session/{session_id}")
+@app.delete("/api/session/{session_id}")
 def delete_session(session_id: str):
     """Clean up temporary files for a session."""
     session_dir = UPLOAD_DIR / session_id
@@ -790,6 +758,145 @@ def delete_session(session_id: str):
     return {"status": "deleted"}
 
 
-@app.get("/health")
+@app.get("/v1/models")
+def mock_openai_models():
+    """Mock models endpoint for MinerU's OpenAI client validation.
+    Returns exactly one model to prevent MinerU's HttpVlmClient from crashing due to ambiguity."""
+    return {
+        "object": "list",
+        "data": [
+            {"id": "meta/llama-3.2-90b-vision-instruct", "object": "model", "created": 1686935002, "owned_by": "nvidia"}
+        ]
+    }
+
+import asyncio
+# Limit concurrency to 3 to prevent NVIDIA NIM from dropping TCP connections
+vlm_proxy_semaphore = asyncio.Semaphore(3)
+
+@app.post("/v1/chat/completions")
+async def vlm_proxy_chat_completions(req: Request):
+    """Proxy VLM requests to Groq/Nvidia and inject strict formatting prompts."""
+    body = await req.json()
+    auth_header = req.headers.get("authorization", "")
+    
+    # 1. Modify prompt to enforce strict output
+    messages = body.get("messages", [])
+    has_system = False
+    
+    instruction = (
+        "\n\nCRITICAL INSTRUCTION: You are a strict data extraction engine. "
+        "You MUST output ONLY the raw requested Markdown or JSON format. "
+        "DO NOT include any conversational filler, explanations, or introductory text. "
+        "Do NOT wrap your output in ```markdown code blocks."
+    )
+    
+    for msg in messages:
+        if msg.get("role") == "system":
+            has_system = True
+            if isinstance(msg.get("content"), str):
+                msg["content"] += instruction
+            elif isinstance(msg.get("content"), list):
+                msg["content"].append({
+                    "type": "text",
+                    "text": instruction
+                })
+        elif msg.get("role") == "user":
+            if isinstance(msg.get("content"), str):
+                msg["content"] += "\n\n" + instruction
+            elif isinstance(msg.get("content"), list):
+                msg["content"].append({
+                    "type": "text",
+                    "text": instruction
+                })
+                
+    if not has_system:
+        messages.insert(0, {"role": "system", "content": instruction})
+        body["messages"] = messages
+    
+    # 2. Determine upstream based on key/header
+    api_key = auth_header.replace("Bearer ", "").strip()
+    url = req.headers.get("vlm_base_url")
+    if not url:
+        if api_key.startswith("gsk_"):
+            url = "https://api.groq.com/openai/v1/chat/completions"
+        else:
+            url = "https://integrate.api.nvidia.com/v1/chat/completions"
+        
+    headers = {
+        "Authorization": auth_header,
+        "Content-Type": "application/json"
+    }
+    
+    import httpx
+    import json
+    import re
+    from fastapi.responses import StreamingResponse, Response
+    
+    is_stream = body.get("stream", False)
+    
+    try:
+        if not is_stream:
+            async with vlm_proxy_semaphore:
+                async with httpx.AsyncClient() as client:
+                    for attempt in range(3):
+                        try:
+                            resp = await client.post(url, headers=headers, json=body, timeout=120.0)
+                            if resp.status_code in (429, 502, 503) and attempt < 2:
+                                await asyncio.sleep(2 ** attempt)
+                                continue
+                                
+                            if resp.status_code == 200:
+                                try:
+                                    data = resp.json()
+                                    if "choices" in data and len(data["choices"]) > 0:
+                                        content = data["choices"][0]["message"]["content"]
+                                        # Clean Llama conversational filler
+                                        content = re.sub(r'^(The text in the image is:|The formula is:|Here is the text:|Here is the extracted text:)\s*"?', '', content, flags=re.IGNORECASE)
+                                        content = re.sub(r'"?\s*$', '', content)
+                                        if content.startswith("```markdown"):
+                                            content = content.replace("```markdown", "", 1).strip()
+                                            if content.endswith("```"):
+                                                content = content[:-3].strip()
+                                        data["choices"][0]["message"]["content"] = content
+                                        return Response(content=json.dumps(data), status_code=200, media_type="application/json")
+                                except Exception:
+                                    pass
+                            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type", "application/json"))
+                        except httpx.RequestError as e:
+                            if attempt == 2:
+                                raise e
+                            await asyncio.sleep(2 ** attempt)
+        else:
+            client = httpx.AsyncClient()
+            req_obj = client.build_request("POST", url, headers=headers, json=body, timeout=120.0)
+            resp = await client.send(req_obj, stream=True)
+            
+            if resp.status_code != 200:
+                content = await resp.aread()
+                await resp.aclose()
+                await client.aclose()
+                return Response(content=content, status_code=resp.status_code, media_type=resp.headers.get("content-type", "application/json"))
+                
+            async def proxy_stream():
+                try:
+                    async for chunk in resp.aiter_bytes():
+                        yield chunk
+                finally:
+                    await resp.aclose()
+                    await client.aclose()
+                    
+            return StreamingResponse(proxy_stream(), media_type="text/event-stream")
+    except httpx.RequestError as e:
+        raise HTTPException(502, f"Bad Gateway: Upstream VLM provider unreachable or timed out ({str(e)})")
+
+
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+# Only mount frontend static files if a production build exists.
+# In dev mode, Vite serves the frontend and proxies /api to this backend.
+_dist_dir = Path(__file__).parent / "dist"
+if _dist_dir.is_dir():
+    app.mount("/", StaticFiles(directory=str(_dist_dir), html=True), name="frontend")
