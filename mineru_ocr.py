@@ -100,7 +100,7 @@ def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, b
     
     if backend in ["hybrid-http-client", "vlm-http-client"]:
         # Route to local proxy to enforce strict JSON/Markdown output formatting
-        proxy_url = os.environ.get("MINERU_PROXY_URL", "http://127.0.0.1:8000/v1")
+        proxy_url = os.environ.get("MINERU_PROXY_URL", "http://127.0.0.1:8001/v1")
         cmd.extend(["-u", proxy_url])
         
     print(f"DEBUG: Running MinerU with cmd: {cmd}", flush=True)
@@ -112,10 +112,7 @@ def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, b
     
     if backend in ["hybrid-http-client", "vlm-http-client"] and nvidia_api_key:
         env["MINERU_VL_API_KEY"] = nvidia_api_key
-        if nvidia_api_key.startswith("gsk_"):
-            env["MINERU_VL_MODEL_NAME"] = "llama-3.2-90b-vision-preview"
-        else:
-            env["MINERU_VL_MODEL_NAME"] = "meta/llama-3.2-90b-vision-instruct"
+        env["MINERU_VL_MODEL_NAME"] = "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
         
     try:
         result = subprocess.run(
@@ -176,7 +173,21 @@ def extract_layouts_mineru_bulk(
 
         _render_multi_page_pdf(doc, page_nums, subset_pdf)
         content_list_path = _run_mineru_cli(subset_pdf, out_dir, device, timeout, backend, effort, nvidia_api_key, lang)
-        
+
+        # Diagnostics: MinerU writes its raw JSON into a TemporaryDirectory that
+        # is deleted the moment this function returns, which makes parsing bugs
+        # (e.g. dropped headings, bad page_size scaling) impossible to inspect
+        # after the fact. Copy the *_content_list.json and *_middle.json out to a
+        # persistent debug folder so they can be examined. Best-effort only.
+        try:
+            debug_dir = Path(__file__).parent / "static" / "mineru_debug"
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            for pattern in ("*_content_list.json", "*_middle.json"):
+                for f in content_list_path.parent.rglob(pattern):
+                    shutil.copy2(f, debug_dir / f.name)
+        except Exception as _dbg_err:
+            print(f"DEBUG: could not copy MinerU debug output: {_dbg_err}", flush=True)
+
         data = json.loads(content_list_path.read_text(encoding="utf-8"))
         
         # Load middle json to get page_size for each page
@@ -214,7 +225,14 @@ def extract_layouts_mineru_bulk(
                 continue
             bbox = block.get("bbox")
             if not bbox:
-                continue
+                # MinerU's content_list.json omits bbox on many plain text /
+                # heading blocks (tables & images do carry one). Previously such
+                # blocks were dropped here -- which is exactly why document titles
+                # silently disappeared from the reconstruction. bbox is only
+                # stored, never used for layout (both the editor UI and the PDF
+                # exporter order elements by reading order), so a placeholder is
+                # safe and preserves the text.
+                bbox = [0.0, 0.0, 0.0, 0.0]
                 
             page_w = layouts_by_idx[page_idx]["width"]
             page_h = layouts_by_idx[page_idx]["height"]
@@ -243,7 +261,14 @@ def extract_layouts_mineru_bulk(
             layout_type = "paragraph"
             bold = False
             rows = []
-            
+
+            # MinerU flags headings via a `text_level` field on ordinary "text"
+            # blocks (1 = top-level title) rather than a distinct block type, so
+            # promote those to headers here.
+            text_level = block.get("text_level")
+            if btype == "text" and isinstance(text_level, int) and 1 <= text_level <= 2:
+                btype = "title"
+
             if btype in ("title", "header"):
                 layout_type = "header"
                 bold = True
@@ -268,6 +293,15 @@ def extract_layouts_mineru_bulk(
                                 pass
                             clean_row.append(cell)
                         rows.append(clean_row)
+                elif text:
+                    # VLM Mode outputs tables as raw Markdown instead of HTML table_body
+                    for line in text.strip().split('\n'):
+                        line = line.strip()
+                        if line.startswith('|'):
+                            cells = [c.strip() for c in line.split('|')[1:-1]]
+                            # Skip the markdown separator row (e.g., |---|---|)
+                            if cells and not all(c.replace('-', '').replace(':', '').strip() == '' for c in cells):
+                                rows.append(cells)
                 text = ""
             elif btype == "equation":
                 layout_type = "equation"
@@ -280,6 +314,21 @@ def extract_layouts_mineru_bulk(
             else:
                 layout_type = "paragraph"
                 font_size = min(font_size, 12.0)
+
+            # Extract inline captions before the main element
+            captions = block.get("table_caption", []) + block.get("image_caption", [])
+            for cap_idx, cap in enumerate(captions):
+                if isinstance(cap, str) and cap.strip():
+                    layouts_by_idx[page_idx]["elements"].append({
+                        "id": f"p{layouts_by_idx[page_idx]['page']}_e{idx}_cap{cap_idx}",
+                        "type": "header",
+                        "text": cap.strip(),
+                        "img_path": "",
+                        "bbox": {"x": x, "y": max(0, y - 25 - cap_idx*25), "width": w, "height": 20},
+                        "font_size": 16.0,
+                        "bold": True,
+                        "color": "#000000",
+                    })
 
             elem = {
                 "id": f"p{layouts_by_idx[page_idx]['page']}_e{idx}",
@@ -294,6 +343,21 @@ def extract_layouts_mineru_bulk(
             if rows:
                 elem["rows"] = rows
             layouts_by_idx[page_idx]["elements"].append(elem)
+
+            # Extract inline footnotes after the main element
+            footnotes = block.get("table_footnote", []) + block.get("image_footnote", [])
+            for fn_idx, fn in enumerate(footnotes):
+                if isinstance(fn, str) and fn.strip():
+                    layouts_by_idx[page_idx]["elements"].append({
+                        "id": f"p{layouts_by_idx[page_idx]['page']}_e{idx}_fn{fn_idx}",
+                        "type": "paragraph",
+                        "text": fn.strip(),
+                        "img_path": "",
+                        "bbox": {"x": x, "y": y + h + 10 + fn_idx*15, "width": w, "height": 15},
+                        "font_size": 10.0,
+                        "bold": False,
+                        "color": "#666666",
+                    })
 
         # Sort elements top-to-bottom, left-to-right to fix header/footer ordering
         for page_data in layouts_by_idx.values():

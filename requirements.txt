@@ -6,3 +6,14 @@ Pillow>=10.0.0
 numpy>=1.24.0
 python-dotenv>=1.0.0
 replicate>=0.25.0
+magic-pdf>=0.7.0b1
+modelscope>=1.11.0
+torch
+torchvision
+# --- Reconstruct/Save (Playwright PDF export) dependencies ---
+# These are imported by ocr/pdf_generation.py and main.py but were previously
+# undeclared, which caused the "Save failed" 500 on Download PDF.
+markdown>=3.5
+python-markdown-math>=0.8
+playwright>=1.44.0
+httpx>=0.27.0

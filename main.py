@@ -587,8 +587,8 @@ def reconstruct_document(req: ReconstructRequest):
         raise HTTPException(404, "Session not found.")
 
     pdf_path = session_dir / "original.pdf"
-    doc = fitz.open(str(pdf_path))
     try:
+        doc = fitz.open(str(pdf_path))
         from ocr.reconstruction import build_editable_document
         import mineru_ocr
 
@@ -674,7 +674,17 @@ async def save_reconstructed(req: ReconstructSaveRequest):
     edited_doc = apply_edits(document, req.edits)
 
     out_path = session_dir / "reconstructed.pdf"
-    await generate_pdf(edited_doc, out_path)
+    try:
+        await generate_pdf(edited_doc, out_path)
+    except Exception as e:
+        # Previously this endpoint had no error handling, so any failure in
+        # generate_pdf (missing Playwright/Chromium, missing markdown/mdx_math,
+        # or the MathJax CDN being unreachable offline) escaped as a non-JSON
+        # 500 that the frontend could only show as the generic "Save failed".
+        # Return the real reason as JSON so it appears in the UI.
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
 
     return FileResponse(
         str(out_path),
@@ -761,13 +771,50 @@ def delete_session(session_id: str):
 @app.get("/v1/models")
 def mock_openai_models():
     """Mock models endpoint for MinerU's OpenAI client validation.
-    Returns exactly one model to prevent MinerU's HttpVlmClient from crashing due to ambiguity."""
+    Returns exactly one model to prevent MinerU's HttpVlmClient from crashing due to ambiguity.
+    The id is kept in sync with the model MinerU is told to request (MINERU_VL_MODEL_NAME)."""
+    model_id = os.environ.get("MINERU_VL_MODEL_NAME", "nvidia/llama-3.1-nemotron-nano-vl-8b-v1")
     return {
         "object": "list",
         "data": [
-            {"id": "meta/llama-3.2-90b-vision-instruct", "object": "model", "created": 1686935002, "owned_by": "nvidia"}
+            {"id": model_id, "object": "model", "created": 1686935002, "owned_by": "nvidia"}
         ]
     }
+
+
+def _clean_vlm_output(content: str) -> str:
+    """Strip conversational filler, <think> reasoning traces, and code fences that
+    general-purpose / reasoning VLMs prepend to OCR-extraction output, so MinerU
+    only ever receives clean Markdown / HTML.
+
+    Deliberately broader than the previous inline cleanup, which only matched
+    'The text in *the* image is' and so let variants like 'the text in image is'
+    leak through.
+    """
+    if not content:
+        return content
+    # Remove <think>...</think> reasoning blocks (Nemotron models can emit these).
+    content = re.sub(r"<think>.*?</think>", "", content, flags=re.IGNORECASE | re.DOTALL).strip()
+    # Remove a leading conversational preamble, e.g. "The text in image is:",
+    # "Here is the extracted table:", "Sure, here's the markdown:".
+    content = re.sub(
+        r'^\s*(?:\*\*[^*]+\*\*\s*\n+)?'  # Optional leading bold header like **Text Recognition**
+        r'(?:sure[,!.]?\s*)?'
+        r'(?:here(?:\'s| is)\s+(?:the\s+)?(?:extracted\s+|following\s+)?'
+        r'(?:text|table|markdown|content|data|latex|formula|equation)'
+        r'|the\s+(?:text|formula|equation|table)(?:\s+in\s+(?:the\s+)?image)?\s+(?:is|are))'
+        r'\s*:?\s*"?\s*\n?',
+        '', content, flags=re.IGNORECASE,
+    ).strip()
+    # Strip a single wrapping code fence (```markdown / ```html / ```json / ```).
+    # Using chr(96)*3 to avoid breaking Markdown parser blocks.
+    ticks = chr(96) * 3
+    pattern = rf"^{ticks}[a-zA-Z]*\s*\n?(.*?)\n?{ticks}\s*$"
+    fence = re.match(pattern, content, flags=re.DOTALL)
+    if fence:
+        content = fence.group(1).strip()
+        
+    return content
 
 import asyncio
 # Limit concurrency to 3 to prevent NVIDIA NIM from dropping TCP connections
@@ -786,6 +833,8 @@ async def vlm_proxy_chat_completions(req: Request):
     instruction = (
         "\n\nCRITICAL INSTRUCTION: You are a strict data extraction engine. "
         "You MUST output ONLY the raw requested Markdown or JSON format. "
+        "If the image contains a table, you MUST extract the entire table structure "
+        "including all rows and columns into standard Markdown table format. "
         "DO NOT include any conversational filler, explanations, or introductory text. "
         "Do NOT wrap your output in ```markdown code blocks."
     )
@@ -813,15 +862,38 @@ async def vlm_proxy_chat_completions(req: Request):
         messages.insert(0, {"role": "system", "content": instruction})
         body["messages"] = messages
     
-    # 2. Determine upstream based on key/header
-    api_key = auth_header.replace("Bearer ", "").strip()
+    # 2. Determine upstream. NVIDIA NIM only (Groq's vision models are unstable /
+    # deprecated), unless an explicit vlm_base_url header points at a local NIM.
     url = req.headers.get("vlm_base_url")
     if not url:
-        if api_key.startswith("gsk_"):
-            url = "https://api.groq.com/openai/v1/chat/completions"
-        else:
-            url = "https://integrate.api.nvidia.com/v1/chat/completions"
-        
+        url = "https://integrate.api.nvidia.com/v1/chat/completions"
+
+    # Deterministic extraction: greedy decoding unless the caller set otherwise.
+    body.setdefault("temperature", 0)
+    # Force a large max_tokens so the VLM doesn't silently truncate the table
+    body["max_tokens"] = 4096
+
+    import base64
+    for msg in messages:
+        if isinstance(msg.get("content"), list):
+            for part in msg["content"]:
+                if part.get("type") == "image_url":
+                    try:
+                        img_url = part["image_url"]["url"]
+                        if "base64," in img_url:
+                            img_data = img_url.split("base64,")[-1]
+                            with open("vlm_debug_image.jpg", "wb") as f:
+                                f.write(base64.b64decode(img_data))
+                    except Exception:
+                        pass
+
+    # NVIDIA NIM is extremely strict. Strip ALL non-standard parameters that MinerU injects.
+    allowed_keys = {"model", "messages", "temperature", "max_tokens", "stream", "stop"}
+    for k in list(body.keys()):
+        if k not in allowed_keys:
+            body.pop(k, None)
+
+
     headers = {
         "Authorization": auth_header,
         "Content-Type": "application/json"
@@ -829,70 +901,97 @@ async def vlm_proxy_chat_completions(req: Request):
     
     import httpx
     import json
-    import re
+    import random
     from fastapi.responses import StreamingResponse, Response
-    
-    is_stream = body.get("stream", False)
-    
-    try:
-        if not is_stream:
-            async with vlm_proxy_semaphore:
-                async with httpx.AsyncClient() as client:
-                    for attempt in range(3):
+
+    client_wants_stream = bool(body.get("stream", False))
+    # Always call upstream non-streaming so the full response can be cleaned
+    # (filler text, <think> blocks, code fences) before it reaches MinerU. The
+    # previous code only cleaned the non-streaming path, so streamed responses
+    # leaked filler like "the text in image is" straight through.
+    body["stream"] = False
+
+    async def _call_upstream():
+        async with vlm_proxy_semaphore:
+            async with httpx.AsyncClient() as client:
+                last_exc = None
+                resp = None
+                for attempt in range(3):
+                    try:
+                        resp = await client.post(url, headers=headers, json=body, timeout=180.0)
+                    except httpx.RequestError as e:
+                        last_exc = e
+                        await asyncio.sleep((2 ** attempt) + random.uniform(0, 0.5))
+                        continue
+                    if resp.status_code in (429, 502, 503) and attempt < 2:
+                        # Respect Retry-After when the provider sends it, else use
+                        # exponential backoff + jitter to ease rate limiting.
+                        retry_after = resp.headers.get("retry-after")
                         try:
-                            resp = await client.post(url, headers=headers, json=body, timeout=120.0)
-                            if resp.status_code in (429, 502, 503) and attempt < 2:
-                                await asyncio.sleep(2 ** attempt)
-                                continue
-                                
-                            if resp.status_code == 200:
-                                try:
-                                    data = resp.json()
-                                    if "choices" in data and len(data["choices"]) > 0:
-                                        content = data["choices"][0]["message"]["content"]
-                                        # Clean Llama conversational filler
-                                        content = re.sub(r'^(The text in the image is:|The formula is:|Here is the text:|Here is the extracted text:)\s*"?', '', content, flags=re.IGNORECASE)
-                                        content = re.sub(r'"?\s*$', '', content)
-                                        if content.startswith("```markdown"):
-                                            content = content.replace("```markdown", "", 1).strip()
-                                            if content.endswith("```"):
-                                                content = content[:-3].strip()
-                                        data["choices"][0]["message"]["content"] = content
-                                        return Response(content=json.dumps(data), status_code=200, media_type="application/json")
-                                except Exception:
-                                    pass
-                            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type", "application/json"))
-                        except httpx.RequestError as e:
-                            if attempt == 2:
-                                raise e
-                            await asyncio.sleep(2 ** attempt)
-        else:
-            client = httpx.AsyncClient()
-            req_obj = client.build_request("POST", url, headers=headers, json=body, timeout=120.0)
-            resp = await client.send(req_obj, stream=True)
-            
-            if resp.status_code != 200:
-                content = await resp.aread()
-                await resp.aclose()
-                await client.aclose()
-                return Response(content=content, status_code=resp.status_code, media_type=resp.headers.get("content-type", "application/json"))
-                
-            async def proxy_stream():
-                try:
-                    async for chunk in resp.aiter_bytes():
-                        yield chunk
-                finally:
-                    await resp.aclose()
-                    await client.aclose()
-                    
-            return StreamingResponse(proxy_stream(), media_type="text/event-stream")
+                            delay = float(retry_after) if retry_after else float(2 ** attempt)
+                        except ValueError:
+                            delay = float(2 ** attempt)
+                        await asyncio.sleep(delay + random.uniform(0, 0.5))
+                        continue
+                    return resp
+                if last_exc is not None:
+                    raise last_exc
+                return resp
+
+    try:
+        resp = await _call_upstream()
     except httpx.RequestError as e:
         raise HTTPException(502, f"Bad Gateway: Upstream VLM provider unreachable or timed out ({str(e)})")
+
+    if resp is None or resp.status_code != 200:
+        return Response(
+            content=resp.content if resp is not None else b"",
+            status_code=resp.status_code if resp is not None else 502,
+            media_type=(resp.headers.get("content-type", "application/json") if resp is not None else "application/json"),
+        )
+
+    # Clean the assistant message before returning it.
+    try:
+        data = resp.json()
+        if "choices" in data and len(data["choices"]) > 0:
+            raw_text = data["choices"][0]["message"]["content"]
+            print("====== VLM RAW OUTPUT START ======\n", raw_text, "\n====== VLM RAW OUTPUT END ======")
+            cleaned_text = _clean_vlm_output(raw_text)
+            data["choices"][0]["message"]["content"] = cleaned_text
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    except Exception:
+        # Non-JSON upstream response -- pass through untouched.
+        return Response(content=resp.content, status_code=resp.status_code,
+                        media_type=resp.headers.get("content-type", "application/json"))
+
+    if not client_wants_stream:
+        return Response(content=json.dumps(data), status_code=200, media_type="application/json")
+
+    # The caller asked for SSE -- re-emit the cleaned content as a single-chunk
+    # stream so MinerU still receives a valid event stream but never sees filler.
+    model_name = data.get("model", body.get("model", ""))
+    resp_id = data.get("id", "chatcmpl-proxy")
+
+    def _one_shot_sse():
+        first = {
+            "id": resp_id, "object": "chat.completion.chunk", "model": model_name,
+            "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}],
+        }
+        done = {
+            "id": resp_id, "object": "chat.completion.chunk", "model": model_name,
+            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+        }
+        yield f"data: {json.dumps(first)}\n\n"
+        yield f"data: {json.dumps(done)}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(_one_shot_sse(), media_type="text/event-stream")
 
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok"}
+    import mineru_ocr
+    return {"status": "ok", "mineru_configured": mineru_ocr.is_configured()}
 
 
 # Only mount frontend static files if a production build exists.

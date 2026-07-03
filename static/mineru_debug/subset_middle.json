@@ -1,0 +1,178 @@
+{
+    "pdf_info": [
+        {
+            "preproc_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        10,
+                        235,
+                        577,
+                        666
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                16,
+                                186,
+                                546,
+                                227
+                            ],
+                            "type": "table_caption",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        16,
+                                        186,
+                                        546,
+                                        227
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                16,
+                                                186,
+                                                546,
+                                                227
+                                            ],
+                                            "type": "text",
+                                            "content": "Specification for XLPE cable for Woking voltage up to and including 1.1 KV, IS:7098 (Part-1), 4 x 400 sq.mm (aluminium)"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        },
+                        {
+                            "bbox": [
+                                10,
+                                235,
+                                577,
+                                666
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        10,
+                                        235,
+                                        577,
+                                        666
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                10,
+                                                235,
+                                                577,
+                                                666
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "5ca02e9765c90e83791362da4124a90be397c9c8176c365bd23b537248dfe637.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 1
+                        }
+                    ],
+                    "index": 1
+                }
+            ],
+            "discarded_blocks": [],
+            "page_size": [
+                595,
+                842
+            ],
+            "page_idx": 0,
+            "para_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        10,
+                        235,
+                        577,
+                        666
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                16,
+                                186,
+                                546,
+                                227
+                            ],
+                            "type": "table_caption",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        16,
+                                        186,
+                                        546,
+                                        227
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                16,
+                                                186,
+                                                546,
+                                                227
+                                            ],
+                                            "type": "text",
+                                            "content": "Specification for XLPE cable for Woking voltage up to and including 1.1 KV, IS:7098 (Part-1), 4 x 400 sq.mm (aluminium)"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        },
+                        {
+                            "bbox": [
+                                10,
+                                235,
+                                577,
+                                666
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        10,
+                                        235,
+                                        577,
+                                        666
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                10,
+                                                235,
+                                                577,
+                                                666
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "5ca02e9765c90e83791362da4124a90be397c9c8176c365bd23b537248dfe637.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 1
+                        }
+                    ],
+                    "index": 1
+                }
+            ]
+        }
+    ],
+    "_backend": "hybrid",
+    "_effort": "medium",
+    "_ocr_enable": true,
+    "_version_name": "3.4.0"
+}

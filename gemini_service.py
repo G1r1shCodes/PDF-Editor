@@ -222,6 +222,7 @@ def send_to_gemini(
         "generationConfig": {},
     }
 
+
     body = _post_to_gemini(url, payload, api_key)   # raises GeminiEditError with detail
     img_b64 = _find_base64_image(body)
     if not img_b64:
