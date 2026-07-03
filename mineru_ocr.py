@@ -78,7 +78,7 @@ def _render_multi_page_pdf(doc: fitz.Document, page_nums: List[int], out_path: P
     subset.close()
 
 
-def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, backend: str = "pipeline", effort: str = "medium", nvidia_api_key: Optional[str] = None, lang: str = "en") -> Path:
+def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, backend: str = "pipeline", effort: str = "medium", nvidia_api_key: Optional[str] = None, lang: str = "en", session_id: str = None) -> Path:
     """Invoke the MinerU CLI on a multi-page PDF and return the content-list JSON path."""
     
     # If the user sets backend="auto", we don't pass it so MinerU falls back to its default (hybrid-engine)
@@ -101,6 +101,8 @@ def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, b
     if backend in ["hybrid-http-client", "vlm-http-client"]:
         # Route to local proxy to enforce strict JSON/Markdown output formatting
         proxy_url = os.environ.get("MINERU_PROXY_URL", "http://127.0.0.1:8007/v1")
+        if session_id:
+            proxy_url += f"?session_id={session_id}"
         cmd.extend(["-u", proxy_url])
         
     print(f"DEBUG: Running MinerU with cmd: {cmd}", flush=True)
@@ -152,6 +154,7 @@ def extract_layouts_mineru_bulk(
     effort: str = "medium",
     nvidia_api_key: Optional[str] = None,
     lang: str = "en",
+    session_id: str = None,
 ) -> tuple[List[dict], str]:
     """Run MinerU on all requested pages at once and return (layouts, md_content).
     Bypasses the word-level OCR extraction and basic layout analysis to preserve
@@ -172,7 +175,7 @@ def extract_layouts_mineru_bulk(
         out_dir.mkdir()
 
         _render_multi_page_pdf(doc, page_nums, subset_pdf)
-        content_list_path = _run_mineru_cli(subset_pdf, out_dir, device, timeout, backend, effort, nvidia_api_key, lang)
+        content_list_path = _run_mineru_cli(subset_pdf, out_dir, device, timeout, backend, effort, nvidia_api_key, lang, session_id=session_id)
 
         # Diagnostics: MinerU writes its raw JSON into a TemporaryDirectory that
         # is deleted the moment this function returns, which makes parsing bugs
@@ -211,6 +214,17 @@ def extract_layouts_mineru_bulk(
 
         # Prepare outputs for each page
         layouts_by_idx = {i: {"page": pn, "width": doc[pn].rect.width, "height": doc[pn].rect.height, "elements": []} for i, pn in enumerate(page_nums)}
+        
+        # Load VLM tables map
+        vlm_tables = {}
+        if session_id:
+            from main import UPLOAD_DIR
+            table_file = UPLOAD_DIR / session_id / "vlm_tables.json"
+            if table_file.exists():
+                try:
+                    vlm_tables = json.loads(table_file.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
         
         for idx, block in enumerate(data):
             page_idx = block.get("page_idx", 0)
@@ -279,6 +293,21 @@ def extract_layouts_mineru_bulk(
             elif btype == "table":
                 layout_type = "table"
                 table_body = block.get("table_body", "")
+                
+                # Check for VLM table via img_key matching
+                if not text and not table_body and img_path:
+                    full_img_path = content_list_path.parent / img_path
+                    if full_img_path.exists():
+                        import base64
+                        with open(full_img_path, "rb") as f:
+                            img_b64 = base64.b64encode(f.read()).decode("utf-8")
+                            if len(img_b64) > 200:
+                                img_key = img_b64[:100] + img_b64[-100:]
+                            else:
+                                img_key = img_b64
+                            if img_key in vlm_tables:
+                                text = vlm_tables[img_key]
+
                 if table_body:
                     tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', table_body, re.IGNORECASE | re.DOTALL)
                     for tr in tr_matches:

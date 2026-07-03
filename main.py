@@ -621,9 +621,13 @@ def reconstruct_document(req: ReconstructRequest):
                 
                 if "http-client" in backend and not req.nvidia_api_key:
                     raise HTTPException(400, "API Key is required for Hybrid/VLM modes")
-                    
+                # Clear old tables
+                table_file = session_dir / "vlm_tables.json"
+                if table_file.exists():
+                    table_file.unlink()
+
                 page_layouts, md_content = mineru_ocr.extract_layouts_mineru_bulk(
-                    doc, page_nums, backend=backend, effort=effort, nvidia_api_key=req.nvidia_api_key
+                    doc, page_nums, backend=backend, effort=effort, nvidia_api_key=req.nvidia_api_key, session_id=req.session_id
                 )
                 
                 # Save Markdown export
@@ -824,7 +828,7 @@ import asyncio
 vlm_proxy_semaphore = asyncio.Semaphore(3)
 
 @app.post("/v1/chat/completions")
-async def vlm_proxy_chat_completions(req: Request):
+async def vlm_proxy_chat_completions(req: Request, session_id: str = None):
     """Proxy VLM requests to Groq/Nvidia and inject strict formatting prompts."""
     body = await req.json()
     auth_header = req.headers.get("authorization", "")
@@ -865,6 +869,19 @@ async def vlm_proxy_chat_completions(req: Request):
     if not has_system:
         messages.insert(0, {"role": "system", "content": instruction})
         body["messages"] = messages
+        
+    img_key = None
+    for msg in messages:
+        if isinstance(msg.get("content"), list):
+            for part in msg["content"]:
+                if part.get("type") == "image_url":
+                    img_url = part["image_url"]["url"]
+                    if "base64," in img_url:
+                        img_b64 = img_url.split("base64,")[-1]
+                        if len(img_b64) > 200:
+                            img_key = img_b64[:100] + img_b64[-100:]
+                        else:
+                            img_key = img_b64
     
     # 2. Determine upstream. NVIDIA NIM only (Groq's vision models are unstable /
     # deprecated), unless an explicit vlm_base_url header points at a local NIM.
@@ -961,6 +978,21 @@ async def vlm_proxy_chat_completions(req: Request):
             raw_text = data["choices"][0]["message"]["content"]
             print("====== VLM RAW OUTPUT START ======\n", raw_text, "\n====== VLM RAW OUTPUT END ======")
             cleaned_text = _clean_vlm_output(raw_text)
+            
+            if session_id and img_key:
+                import json
+                session_dir = UPLOAD_DIR / session_id
+                if session_dir.exists():
+                    table_file = session_dir / "vlm_tables.json"
+                    tables = {}
+                    if table_file.exists():
+                        try:
+                            tables = json.loads(table_file.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
+                    tables[img_key] = cleaned_text
+                    table_file.write_text(json.dumps(tables, indent=2), encoding="utf-8")
+                    
             data["choices"][0]["message"]["content"] = cleaned_text
         content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
     except Exception:

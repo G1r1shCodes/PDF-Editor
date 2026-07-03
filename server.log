@@ -1,322 +1,60 @@
-INFO:     Started server process [28644]
+INFO:     Started server process [24556]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8007 (Press CTRL+C to quit)
-DEBUG: Running MinerU with cmd: ['C:\\Users\\DESKTOP\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\mineru.exe', '-p', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_dll6lnix\\subset.pdf', '-o', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_dll6lnix\\out', '-m', 'auto', '--effort', 'medium', '-b', 'hybrid-http-client', '-l', 'en', '-u', 'http://127.0.0.1:8007/v1']
-INFO:     127.0.0.1:63565 - "GET /v1/models HTTP/1.1" 200 OK
+DEBUG: Running MinerU with cmd: ['C:\\Users\\DESKTOP\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\mineru.exe', '-p', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_2vs4k4c2\\subset.pdf', '-o', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_2vs4k4c2\\out', '-m', 'auto', '--effort', 'medium', '-b', 'hybrid-http-client', '-l', 'en', '-u', 'http://127.0.0.1:8007/v1?session_id=YQvvohlGhug=']
+INFO:     127.0.0.1:59745 - "GET /v1/models HTTP/1.1" 200 OK
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
+=========================
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfcAAABCCAIAAADFZwgCAAA/qElEQVR4nO29d1wUx//4z+5xx3H03os06b03qYo0KYIVGxoVC8ZoTOxGo5KiUbErvmNUUMTQVESlSBEEkY5Ikd47HNxx7ff4ZH6f/e7j7jgB9Z3Ezz7/upudnX3N7MxrZl7zmlk+PgwMDAyMLxeIxWL93TJgYGBgYHwu4M+WMgYGBgbG3w+m5TEwMDC+ZDAtj4GBgfElg2l5DAwMjC8ZTMtjYGBgfMnwf76kJycnmUwmkUj8fI8gk8ldXV0SEhKSkpIgZGxsDI/HCwgI/I1SfTxMJrO/v39wcJBGo0lISMjLy8Pw/7n+mMlkjo+PCwsLf6aa8H8ZMpksICDAz/8Zmz/GPwf219zR0XH//v3c3NyWlha0kyUEQXg8XkRERFlZ2dXV1d/fX0hIiHfSd+/eff/+/f79+zk1FJPJTElJuXv3bmNjI3gKDMPLly+PiIjA4XAgzsDAQGxsbGZmZltbGz8/v4mJSVhYmK2tLbhaWlp65MiRN2/eGBoaMhiM/v7+hQsXrlmzJiEhwdPT08TEZBZS8fHx5eTkPHv2LC8vb3R0FMm4jo6OpaWlj4+PpqYm3zSorKxMTEzMz8/v7+9HF6CAgICEhIS2tra7u7urqytXBVRfX3/27NnU1NTBwUEzMzMBAYHy8nI6ne7h4REREeHg4IDEHB8fT0pKysvLe/PmDZ1OB4EEAsHGxsbExCQwMJBTP+bn51+8eLGurg55swICAvb29oGBgTY2NiBkeHj4xo0bT58+7evrw+PxDg4O4eHhGRkZ+fn57969Q26EIIifn19YWFhFRcXOzs7Pz09GRmZ2Uk1FXV3d8ePHf/nlF5DyVHywJlRXV+/cuXNwcHA6D7W1tY2KiuIcBAwODt69e3eahdDc3 
 =========================
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
 =========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOkAAAAdCAIAAADAVty7AAASX0lEQVR4nO2beVRTx7/Ac29uFpJAQgIRCJuiCCoIBaog9hCwiiIi5ChdQE6NBqXUrcVixSoVsC16bFGPYkVbxQ1UFnGLBERpEWWTJYIioBVBNmMgIZDlvvN6f70vL5uA7XvHc/L5j+98Z+Y7M9/MfOd7BwCGYYwRI+8g4P+3AUaMTBCj7xp5VzH6rpF3FaPvGnlXMfqukXcVSKdUKBRmZ2dXV1eLRCJEAgAAgUAwNzd3dXUNDQ2dO3cuCP633w8NDf322293795tbW1VqVQYDIZGo3l6en766adubm5I3c7OzuPHj1dXV3d3dwMA4OTkxGazqVRqSUlJY2PjyMgIogaCIB6Pp1KpDg4ObDZ7yZIlRCJRn90qlaqmpuby5ct1dXWvX79mMBizZs1asWLFrFmzKioqRCLRokWLCgsLi4qKmpub5XI5BoMhEAgzZ86MiIj48MMPMRjM5b8QCoVIKR6Pnzlz5vLly4ODg3X2mJ2dTafTlyxZYnhCq6urs7OzGxsbYRh2dHRks9lBQUF8Pt/Ly2vmzJlSqfTUqVMVFRWPHj1SKpX6GnFwcMjIyLCysjLcFwaDUSgUt2/fvnbtWnNz89DQkLm5uYeHR3h4ODr5CEKh8PTp0zU1NQMDA4gEAAAIgshksrW1tZeXF4fDsbGxUZ/ey5cv37hxQ32BAADAYrEEAoFOpzs4OHh7ewcFBTGZTPWOiouLi4qK6uvrJRKJPpsJBMKuXbsCAwPHa5UmsH5KS0sZDAYAABEREZcvXy4oKPj8889pNBoOh4uJienr60M1RSLRwoULAQAwNzcvLi7W2drDhw+dnZ3DwsJEIhEiUSgUycnJWCyWQqHs3LmTz+dfuXIlMTHRwsICBMGAgIDW1ladT 
 =========================
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
 =========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKMAAACRCAIAAAAgvJ9xAABc90lEQVR4nO29CZscR44lCJifcUfeTJISdVV39cy3+/9/xezO9HTX1SpJvJl3Zlx+mWG/B/MrIpMUpaKO7h2vqFQyMsLDw2GAAQ8PAIsI/Z/j/weH+a0v4P8cv9LxfyT9/5cjpP8qR28bkns/9djaph7cs7j90f1z6+dD7+H3/ul3dfzXkTSEJ5XYgqRgyUUyciVJhQc5EmFIFw9dE/6BdzExqbSEAvIPDohC5pBMRByKSYgjMhGeYfMBqf+ej/9CkhaRain5tVSXXF2KfUf2Tqo7sguWiiFyK2L9gnBkiSxDaCKQdMDEwqnwgPAYMQ/FjCmaUTiWaJ/COYVTE445SHUd/Oc7wv88ZtmroyOxJCVJQQ7qq48SD1dQeSvFNdlrqa7IXkLSbkV2RWRVzI7EqX5D6kRWeiZbiMWkRIlwSjwkGhAkPSYzomgukPRcRT4jTkkMSUBQ+kBMyEFERtW9Z8l/b1b9P4Gk9XDinEgprnR2zdUlVWdcXpK9IntNLmcp2JXiMrYbsmtxS3JLcZkuiI1glVgWgQJj3VjGcrH1uVuRcESkDzMQSokTylMyCYdDNkMKhhQcSrBPMnZFJGVEwZjDMUcjHh/wYMpRAnmb36l5599tPK0XZrH1upJcLnbj8FjBIJevTfEDle/InlN1DjFLZajS1ztylUhOLsd7632aiJxK2u/OFprt3O5Hcr1DQ9jYkmP9Gar8IvyT5kQzsSO7il0WE8843Od4z+w95ukJD6YUJRwmFERsAjIBQpvfjZb/jnVarNgbKc6kuoR0qxupFuSWZO/IYhvm6pqqW6qumUo2jtlBjPjpVGUrgbelT9K2H955ZzufiJhTIB41zmRwAmPYGZJIOCB7Ji6VIqVVLKuE7Ixon 
 =========================
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
 =========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== VLM RAW OUTPUT START ======
- "PURCHASE ORDER" 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60273 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Entity | Value |
-| --- | --- |
-| BANSAL POLYPLAST PRIVATE LIMITED | www.bansalpolyplast.com | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60272 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- ```json
-{
-  "logo": {
-    "type": "circle",
-    "color": "white",
-    "border": {
-      "color": "orange",
-      "width": 5
-    },
-    "content": {
-      "type": "text",
-      "content": "BP",
-      "style": {
-        "font": "bold",
-        "size": 50,
-        "color": {
-          "primary": "orange",
-          "secondary": "blue"
-        }
-      }
-    }
-  }
-}
-``` 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60271 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Sr. No. | Item Details | HSN/SAC | Qty | UOM | Unit Rate | Discount | GST | Amount |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 30 SQ MM ACSR CONDUCTOR (WEASEL) | 76042910 | 10000 | MTR | 48 | 0% | - | 480,000 |
-|  |  |  |  |  |  |  | Sub Total (INR) | 480,000 |
-|  |  |  |  |  |  |  | GST 18% | 86400 |
-|  |  |  |  |  |  |  | Adjustment | 0 |
-|  |  |  |  |  |  |  | Total Amount | INR 566,400 | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60274 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Payment Terms | 20% Payment of the basic value in advance, 60% Payment along with GST before dispatch of material 20% Payment within 3 Months from the date of delivery at site. The quoted prices shall remain firm and fixed for the entire duration of the supply and shall not be subjected to escalation of any kind, unless specified in the purchase Order/contract. The price payable for the Goods shall be that stated in the Order and, unless otherwise stated, shall be inclusive of all charges including, but not limited to packaging material, packing, shipping, loading, carriage, insurance and delivery of the Goods to the delivery address and any duties, imposts, levies or taxes if any. Buyer's payment process will be by E -payment and RTGS/NEFT charges, if any, will be borne by the Seller. |
-| --- | --- |
-| Taxes & Duties | 1. GST extra as applicable. 2. Seller shall ensure that the HSN code pertaining to the supplied items shall be mentioned in the invoices, failing which the invoice shall be returned to the vendor and will be processed only upon receipt of the corrected invoice, incorporating the HSN codes. 3. Seller should mention theirs and Buyer's GSTIN number in all invoices and corresponding documents. 4. The Seller shall further ensure that original invoices should be provided at the time of delivering the materials. |
-| Insurance | Insurance will be Buyer's part and Seller should provide all the details regarding Insurance. |
-| Delivery Schedule | 15 days from date of Issuance of PO/Acceptance of prepayment. Timely delivery is essential for this Order. All materials must be delivered in one lot unless specified and mutually agreed between both Buyer and Seller. In the event of delayed delivery, uninformed staggered delivery or any other issues, Buyer reserves the right to cancel the Order or impose penalty on Seller at any time. The Seller shall ensure that each delivery is accompanied by a delivery note which is prominently displayed and which shows, inter alia, the Order number, date of Order, number of packages and contents and, in the case of part delivery, the outstanding balance remaining to be delivered. The Goods shall be delivered as per the incoterms specified in the Order and at the time and in the manner specified in the Order. The Buyer may specify in writing to the Seller at any time before delivery, another time place or manner for delivery, in which case that other time, place or manner applies in place of those stated in the Order. Where access to premises is necessary in connection with delivery, the Seller and its Sub-Contractors shall at all times comply with the requirements of the Buyer's authorized representative. The Buyer will not be required to pay for any Goods which are delivered to the Buyer in excess of the quantities Ordered by the Buyer. Any such excess will be and will remain at the Seller's risk and will be returnable at the Seller's expense. If the goods are dispatched through a mode of transport and/or carrier not approved by Buyer, any incidence of demurrage and wharfage shall be debited to the Seller's A/c. |
-| Packing & Forwarding Charges | Prices are Inclusive of Packing & Forwarding. |
-| Environmental Consideration | 1. Don't use plastic, polythene or polyfilm as packaging material. If there is no substitute available, ensure use of recyclable/recycled plastic materials. 2. Ensure compliance of PUC for each and every transport vehicle. 3. In case of liquid hazardous chemical, ensure zero leakage & spillage of chemicals. |
-| Damages | The Seller understands that time is of the essence of this Order. Notwithstanding the above, for any delay beyond the stipulated delivery/completion period as mentioned herein, Buyer reserves its right to impose penalty @ 0.5 % per week or part thereof, subject to a maximum of 5.0 % of the total Order value, without requirement of proof of actual loss and without prejudice to other remedies available to Buyer. |
-| Intimation of Dispatch | One copy of dispatch document of each consignment should invariably be forwarded to the undersigned. | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60275 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | 11. GUARANTEE/WARRANTY | The material will be guaranteed for satisfactory performance for a period of 12 (Twelve) months from the date of installation or 18 (Eighteen) from the date of receipt and acceptance by the consignee. - This to be filled as per mutual agreement. The Seller warrants to the Buyer that: 1. It has clear title to the Goods and that they are being delivered free of all and any liens and encumbrances. 2. The Goods are of merchantable quality and fit for the purpose for which they are required by the Buyer under the Contract. 3. The Goods are free from defects in design, workmanship and materials. 4. The Goods correspond in every respect to any specifications, drawings, samples or descriptions provided by the Buyer to the Seller. 5. The Seller shall guarantee that the materials supplied will be new, unused and of current design not likely to be discontinued or become obsolete for the duration of the equipment's life. |
-| --- | --- |
-| 12. AFTER SALES SERVICE | The Seller must provide After Sales & Service as and when required. |
-| 13. GOVERNING LAW AND ARBITRATION | If at any time, any question, any dispute and/or differences whatsoever shall arise between the parties due to any conditions and failing amicable solution/settlement, the same shall be referred to an arbitration under the Indian Arbitration and conciliation Act 1996 or any statutory modifications of the same prevalent at the time. The right to appoint the arbitrator and to decide the place of arbitration rests with us and award of the arbitrator shall be final and binding on both the parties. Both the parties shall bear the respective cost of arbitration without any claims on another party. |
-| 14. JURISDICTION | This Contract/Order shall be construed, governed and enforced in accordance with the law of India. The parties hereby agree that Kolkata High Court ( West Bengal, India) shall have the exclusive jurisdiction for all legal disputes arising between the Parties under Purchase Order. |
-| 15. ORDER ACKNOWLEDGEMENT | Please acknowledge the receipt of this Order immediately as a token of acceptance of this order. |
-| 16. INDEMNITY | To the fullest extent permitted by law, the Supplier agrees to indemnify, hold harmless and defend the Buyer and its affiliated companies, their customers, directors, officers, employees and agents, from and against any loss, liability, cost, expenses, suits actions claims and all other obligations and proceedings whatsoever, including without limitation, all judgements rendered against and all fines and penalties imposed upon the Buyer, and any reasonable attorney's fees and any other costs of litigation (hereinafter collectively referred to as "Liabilities") arising out of death, personal injury and/or damage to property caused by the Supplier, its employees, agents, subcontractors, or in any way attributable to the Goods. |
-| 17. LIABILITY FOR DEFECTS | 1. The Seller guarantees all goods against defects due to defective materials, faulty design and workmanship for a period of twenty four (24) months from the date of acceptance of the goods by the Buyer (the "Defects Liability Period"), unless specified in the purchase Order. 2. If, during the Defects Liability Period, the Goods are found to be defective, the Seller shall, at its own cost and at the Buyer's option, either a) Repair or, at the Buyer's option, replace the defective Goods and bear all the costs of so doing including, but not limited to, all necessary transportation and access costs, or b) Reimburse the Buyer for all and any costs and expenses incurred in having the Goods repaired or replaced by a 3. In the event that the Buyer elects to proceed in accordance with "Repair or replace" and the Seller fails to repair or replace the defective Goods within Fifteen (15) days from the date of intimation, the Buyer will be entitled, at the Seller's expense, to undertake such repair or replacement itself or to have it performed by a third Party. 4. The Buyer has the right to reject the good in case it does not meet the standards specified in the Order or the product mismatches in dimensions from the original part or drawing provided by the Buyer 5. If Seller fails to rectify defects within stipulated time, Buyer may repair/replace through third party at Seller's risk and cost. | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60276 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | 18. CONFIDENTIALITY | The Seller shall treat as confidential, and require its employees, agents and subcontractors to treat as confidential, all information of a technical or commercial nature provided by the Buyer to the Seller under the Purchase Order/ Contract. This clause does not apply to information which is part, or becomes part, of the public domain other than by breach of this clause. All parts supplied under this contract must be delivered in white-label packaging. The Seller shall not affix any trademarks, logos, or brand names to the products unless expressly authorized by the Buyer in writing. Materials shall be rejected at the Buyer's premises if the Seller fails to adhere to the required product labelling standards, including the explicit prohibit on of any trademarks, logos, or brand names, in accordance with the Buyer's specifications. |
-| --- | --- |
-| 19. FORCE MAJEURE | If at any time during the continuance of this Order the performance by either party under this Order shall be prevented by reasons of any declared war, hostility, acts of the public or civil commotion, sabotage, fire, flood, earthquake, explosion, epidemic, quarantine restrictions or other acts of God, (hereinafter referred to as 'eventuality') affecting the performance and respective obligation of the parties provided that notice of the happening of any such eventuality is given by either party to the other other within fifteen (15) days from the date of the occurrence of such eventuality, neither party shall, by reason of such eventuality be entitled to terminate the Order, nor shall either party have any claim for damages against the other in respect of such non-performance and the work under this Order. The performance shall be resumed as soon as practicable after such eventuality has come to an end or ceased to exist. Under such circumstances the contractual delivery period shall be extended by a period equal to that during which such eventuality operated plus an additional period, if any, as may be considered reasonable by Purchaser and Supplier. Whether the eventuality has come to an end or ceased to exist will be deliberated and mutually settled. |
-| 20. ISO COMPLIANCE | The Seller is expected to comply with the requirement of Clause No 8.2 of ISO 9001:2015, Clause No 8.1 of ISO 14001:2015 and ISO 45001:2018 respectively. |
-| 21. TEST CERTIFICATE | Manufacturer's Guarantee and Test Certificate should be furnished by the Supplier along with the supply. |
-| 22. MANDATORY DISPATCH DOCUMENTS- Domestic | The Seller is responsible for obtaining clear receipt from the Transport Authorities specifying the goods dispatched. It shall not book any consignment on a "said to contain" basis, If it does so, the responsibility shall lie to the Seller. The Buyer shall not take any responsibility for short deliveries or wrong supply of goods when the same are booked on "said to contain" basis. The following documents are to be submitted to the consignee i.e. site stores along with each consignment. 1. Original and Duplicate copy of Commercial Invoice/ Taxable Invoice. 2. Packing list / Delivery challan. 3. Original LR/RR. 4. Copies of Test Certificate / Manufacturing Test Certificate 5. Relevant Valid ID Certificate. 6. Drawing, Operating and Maintenance Manuals, wherever applicable. 7. Any other documents as requested by Buyer |
-| 23. RIGHTS AND REMEDIES | Any terms and conditions, rights and remedies under this Order shall not be jointly, harmoniously and collectively construed to be read together and combined with any past or existing or future Order/contract/agreement/ understanding, written or oral between the Parties. |
-| 24. SUPERSEDING CLAUSE | This Purchase Order is inviolate and shall supersede all other terms via verbal communication that has been agreed upon or may be agreed by and between the Parties in future. The Terms and Conditions of this Purchase Order shall be final and binding unless otherwise amended and/or cancelled with the issuance of a fresh purchase Order upon due approval of Director of the Buyer. |
-| 25. LOGISTIC CONTACT PERSON | ARVIND SHRIVASTAV: 9717496315 | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:60277 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59139 - "POST /api/reconstruct HTTP/1.1" 200 OK
-DEBUG: Running MinerU with cmd: ['C:\\Users\\DESKTOP\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\mineru.exe', '-p', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_cxazf6ks\\subset.pdf', '-o', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_cxazf6ks\\out', '-m', 'auto', '--effort', 'medium', '-b', 'hybrid-http-client', '-l', 'en', '-u', 'http://127.0.0.1:8007/v1']
-INFO:     127.0.0.1:58337 - "GET /v1/models HTTP/1.1" 200 OK
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABj4AAAXwCAIAAABtzKUzAAEAAElEQVR4nOzdB1gU1/o/8JmtwNIE6SBVBOwVEBE09t6wG40ldmOMLV5jiSUxsbeILZZEBXtDjV1REQtKkSId6bC03WX7/J9w7m/v/hdENBaSfD/3eW7W2dkzZ84uO2ffOec9NMMwFEWFhoaOGDGCoijyTwAAAAAAAAAAgE8iKCjoxIkTQUFBoaGhrE9TBQAAAAAAAAAAgDdB6AoAAAAAAAAAAOophK4AAAAAAAAAAKCe4pD/cLlcHx8fkvTqU1cJAAAAAAAAAAD+vSQSiW7oSqFQREREUBRFkrUDAAAAAAAAAAB8Em3btdM8xoRBAAAAAAAAAACoRyqlct1RVxq3H8d+9PoAAAAAAAAAAAD817JFX1P/F6DCqCsAAAAAAAAAAKinELoCAAAAAAAAAIB6CqErAAAAAAAAAACopxC6AgAAAAAAAACAeko3TTshl8vTU1PkcplmC03TfD7fwtLaxNT0I1RLpVJFRz25cOaEnp7+vG+Xsdlsqn5QqVRFhQVlpaWGhoaW1jYcTs0N+EZqtTrhReyZ48e4XO77OsGy0tJXWRkMw2hvZLPZBgKBhYWVgUBAfXj5ebkbf/jeQGD49aKlxiYmFEWVCIuvXb4YfvvmhCnTW7fr8BHqAAAAAAAAAAD/GDVHXhiGqayU3L9z6/TxozKptKGFpX0jx7LSkleZGQ6OzsNGjunRdwCXy/1AdZLL5ZfOnb504Ux8bIx/4Gc6sZhPJTf71Yljvz9+eL+hhaWxiWlRYUFRYYFvp87Dx4y3trF9q6LkcvnFMyfPngxJS0l+jyeoUilLhMLzp0If3g+nabqhpaW1jR2bzS4qLMjLyW5oadXO23fw8FGubu7UB1NWWpqclCgQGIrFImMTk4z01ONHD 
 =========================
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
 =========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABj4AAAYyCAIAAAAABAARAAEAAElEQVR4nOy9d1xTSdT4nR56R0BABOlF6lJsgKggAgKKiKtiBXXtuhZERbDu2uuuqCAortgLWEBULCAoAtJ77yFAKElIeT+P83vumycJIRSVdef7F8ydzJ17zplyz505g2az2SgU6tixY6mpqcrKyg0NDSgIBAKBQCAQCAQCgUAgEAjkh7J582Y7OzsU+ytz585FoVC2trY/tk4QCAQCgUAgEAgEAoFAIBAICoWKjY1ls9k4TlmIior6+PhA6UAgEAjkW9Pd3U0ikVAolLq6OpQ2BAKBQCAQCAQCQWCz2TU1NSgUCo/Ho1Co/+O6UlBQiI2N5UyBQCAQCORbEBsb6+vri0KhUlJSoIQhEAgEAoFAIBAIApvNxmAwKBSqt7cXhUL9z18QCAQCgUAgEAgEAoFAIBDICAS6riAQCAQCgUAgEAgEAoFAICMU6LqCQCAQCAQCgUAgEAgEAoGMUKDrCgKBQCAQCAQCgUAgEAgEMkL5P2Ha+6KhoSEuLs7Dw0NRUZFvBhqN9vDhQ01NTSsrqyFWqLm5uba2ls1ma2hoyMnJoVAoCoXCYrGkpaUrKirq6+s5M4uKihoaGhIIBBQKxWAw8vLyurq6wCU0Gj1mzJjRo0fz3qKzs7O3t1dWVpb3KfLz83t6epAUNBqNx+Pl5OTU1dVxOKFk1dTUJC0tTSQSudKLiorAWVooFGr06NEaGhpcGbieTk5ObvTo0QUFBQwGQ8Dt8Hi8gYFBc3Mzl2S4IBAIxsbGRCKRV4Z95eRMpFKpmzdvdnJyUlVVZbPZIBGLxerp6TGZzOLiYhaLhWQeNWrUuHHjgDzz8vKoVKqAp2YymU1NTSoqKrw1IZFIxcXFyO2AOsTExJS+MpTMfOmrJpxPAR5ZW 
 =========================
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
 =========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABj4AAAZfCAIAAAC0bhyVAAEAAElEQVR4nOzdd1wTSdw4/vRQAgRClSadANKlqKciKkqRogicvTdET+wFEezlxN4FQUUBCyhWbCgqoHTpiKD0klACScgmv9fjPN/95aEEbKfezfsfZTPZnZ2dbZOZz2AFAgEGgiAIgiAIgiAIgiAIgn49uJ+dAQiCIAiCIAiCIAiCIAjqHWy6giAIgiAIgiAIgiAIgn5RBPDPgQMHXr9+raysXFtb+7OzBEEQBEEQBEEQBEEQBP3XrVq1yt7eHiP4bMqUKRgMxs7O7mfnCoIgCIIgCIIgCIIgCIIwMTExAoHgf3tdAeLi4t7e3rBsIAiCoB+to6OjqakJg8Goq6vD0oYgCIIgCIIgCCUQCD59+oTBYIhE4v8/YBCQl5ePiYkRXgJBEARBP0JMTIyPjw8Gg3n16hUsYQiCIAiCIAiCUAKBAIf7n+DsXV1dMEw7BEEQBEEQBEEQBEEQ9OuCMwxCEARBEARBEARBEARBvyjYdAVBEARBEARBEARBEAT9omDTFQRBEARBEARBEARBEPSL+j9h2nuqrq6+ceNGRUWFqqqqh4eHpqbmwFddWlra0NAgvIRIJCoqKqqqquLxeNHfbW9v7+rqkpWV7bYcQZDCwsLW1lbhhQoKCrq6uuD/DAajuLiYz+eDP0kkkoqKSmVlpUAgAH8aGxuLiYn1td2GhoaysjKQWExMbNCgQRUVFQiC9JUei8Xq6OhIS0vn5+ez2WwMBoPH4w0MDGRkZIST8Xi8/Px8FouFfktbW1tcXLywsJDH44koByKRSKfTJSUluxVCQUFBW1ubiC9isVgNDQ0JCYni4uJ+86+goNDU1FRSUgJ2HP1IQkJC6bNu3xJO/KVFamRkRCaTwUccDqesrAxBEHV1dSqVy 
 =========================
 ====== ORIGINAL VLM SYSTEM PROMPT ======
  You are a helpful assistant. 
 =========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
+====== ORIGINAL VLM USER PROMPT ======
+ [{'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABj4AAAaLCAIAAAA9wUKsAAEAAElEQVR4nOy9Z1gUyRfwO5mBGWDIICA5JwVWxAiiomAABZE1YETdNWdREcG8Zl0D6IKYMWFADIiAopgISpSMksMgM4QZJtznte7bd+6EZggqu//6fVF6uqtPnzp1qvp01Sksn8/HQCAQCAQCgUAgEAgEAoFAIP0P3K8WAAKBQCAQCAQCgUAgEAgEAhEPDF1BIBAIBAKBQCAQCAQCgUD6KQTwz5cvX16/fv2rhYFAIBAIBAKBQCAQCAQCgUD+Dzo6OsOGDcPwv3P9+vXvByEQCAQCgUAgEAgEAoFAIJBfj6+vL5/PhwsGIRAIBAKBQCAQCAQCgUAg/XvBIALccBACgUAgPwcsFovBYGJiYnx9faHOIRAIBAKBQCAQCIKvr+/NmzfB/+GsKwgEAoFAIBAIBAKBQCAQSD8Fhq4gEAgEAoFAIBAIBAKBQCD9FBi6gkAgEAgEAoFAIBAIBAKB9FNg6AoCgUAgEAgEAoFAIBAIBPIvSdMuFhaLde/ePQMDA0dHR9Ffy8vL79+/X1ZWpqioOHbsWCcnJxyu5xExBoNRVlaGx+MHDhxIpVIxGAyTyeRwODQaTfTkxsbGqqoqPB6vq6srLy8v9FNhYSHIOk+lUi0sLAiE/9/DNjc3f/78mcvlgj9JJJK6unplZSVKonoKhWJmZlZcXPzt2zfB48rKyng8vr6+XvAgFoslEokqKioDBgwgkUhCRQndXRQsFmtkZKSgoJCbm9vR0YHBYPB4vJmZmaKiouBpHA4nNze3tbUVucrQ0JDFYn39+hWDiqKiopmZWUFBgeizmJmZiZ7PZDI7OzuVlJREfyotLa2pqRE8gsPhTE1NhU5mMpl5eXkcDkfoGTs6OqSRVldXNz8/X+hyExMTFRUVs 
 =========================
 ====== VLM RAW OUTPUT START ======
  "PURCHASE ORDER" 
 ====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58343 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59758 - "POST /v1/chat/completions HTTP/1.1" 200 OK
 ====== VLM RAW OUTPUT START ======
- | Entity | Value |
+ ```markdown
+| Entity | Value |
 | --- | --- |
-| BANSAL POLYPLAST PRIVATE LIMITED | www.bansalpolyplast.com | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58342 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- ```json
-{
-  "logo": {
-    "type": "circle",
-    "color": "white",
-    "border": {
-      "color": "orange",
-      "width": 5
-    },
-    "content": {
-      "type": "text",
-      "content": "BP",
-      "style": {
-        "font": "bold",
-        "size": 50,
-        "color": {
-          "primary": "orange",
-          "secondary": "blue"
-        }
-      }
-    }
-  }
-}
+| BANSAL POLYPLAST PRIVATE LIMITED | www.bansalpolyplast.com |
 ``` 
 ====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58341 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Sr. No. | Item Details | HSN/SAC | Qty | UOM | Unit Rate | Discount | GST | Amount |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 30 SQ MM ACSR CONDUCTOR (WEASEL) | 76042910 | 10000 | MTR | 48 | 0% | - | 480,000 |
-|  |  |  |  |  |  |  | Sub Total (INR) | 480,000 |
-|  |  |  |  |  |  |  | GST 18% | 86400 |
-|  |  |  |  |  |  |  | Adjustment | 0 |
-|  |  |  |  |  |  |  | Total Amount | INR 566,400 | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58344 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Payment Terms | 20% Payment of the basic value in advance, 60% Payment along with GST before dispatch of material 20% Payment within 3 Months from the date of delivery at site. The quoted prices shall remain firm and fixed for the entire duration of the supply and shall not be subjected to escalation of any kind, unless specified in the purchase Order/contract. The price payable for the Goods shall be that stated in the Order and, unless otherwise stated, shall be inclusive of all charges including, but not limited to packaging material, packing, shipping, loading, carriage, insurance and delivery of the Goods to the delivery address and any duties, imposts, levies or taxes if any. Buyer's payment process will be by E -payment and RTGS/NEFT charges, if any, will be borne by the Seller. |
-| --- | --- |
-| Taxes & Duties | 1. GST extra as applicable. 2. Seller shall ensure that the HSN code pertaining to the supplied items shall be mentioned in the invoices, failing which the invoice shall be returned to the vendor and will be processed only upon receipt of the corrected invoice, incorporating the HSN codes. 3. Seller should mention theirs and Buyer's GSTIN number in all invoices and corresponding documents. 4. The Seller shall further ensure that original invoices should be provided at the time of delivering the materials. |
-| Insurance | Insurance will be Buyer's part and Seller should provide all the details regarding Insurance. |
-| Delivery Schedule | 15 days from date of Issuance of PO/Acceptance of prepayment. Timely delivery is essential for this Order. All materials must be delivered in one lot unless specified and mutually agreed between both Buyer and Seller. In the event of delayed delivery, uninformed staggered delivery or any other issues, Buyer reserves the right to cancel the Order or impose penalty on Seller at any time. The Seller shall ensure that each delivery is accompanied by a delivery note which is prominently displayed and which shows, inter alia, the Order number, date of Order, number of packages and contents and, in the case of part delivery, the outstanding balance remaining to be delivered. The Goods shall be delivered as per the incoterms specified in the Order and at the time and in the manner specified in the Order. The Buyer may specify in writing to the Seller at any time before delivery, another time place or manner for delivery, in which case that other time, place or manner applies in place of those stated in the Order. Where access to premises is necessary in connection with delivery, the Seller and its Sub-Contractors shall at all times comply with the requirements of the Buyer's authorized representative. The Buyer will not be required to pay for any Goods which are delivered to the Buyer in excess of the quantities Ordered by the Buyer. Any such excess will be and will remain at the Seller's risk and will be returnable at the Seller's expense. If the goods are dispatched through a mode of transport and/or carrier not approved by Buyer, any incidence of demurrage and wharfage shall be debited to the Seller's A/c. |
-| Packing & Forwarding Charges | Prices are Inclusive of Packing & Forwarding. |
-| Environmental Consideration | 1. Don't use plastic, polythene or polyfilm as packaging material. If there is no substitute available, ensure use of recyclable/recycled plastic materials. 2. Ensure compliance of PUC for each and every transport vehicle. 3. In case of liquid hazardous chemical, ensure zero leakage & spillage of chemicals. |
-| Damages | The Seller understands that time is of the essence of this Order. Notwithstanding the above, for any delay beyond the stipulated delivery/completion period as mentioned herein, Buyer reserves its right to impose penalty @ 0.5 % per week or part thereof, subject to a maximum of 5.0 % of the total Order value, without requirement of proof of actual loss and without prejudice to other remedies available to Buyer. |
-| Intimation of Dispatch | One copy of dispatch document of each consignment should invariably be forwarded to the undersigned. | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58345 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | 11. GUARANTEE/WARRANTY | The material will be guaranteed for satisfactory performance for a period of 12 (Twelve) months from the date of installation or 18 (Eighteen) from the date of receipt and acceptance by the consignee. - This to be filled as per mutual agreement. The Seller warrants to the Buyer that: 1. It has clear title to the Goods and that they are being delivered free of all and any liens and encumbrances. 2. The Goods are of merchantable quality and fit for the purpose for which they are required by the Buyer under the Contract. 3. The Goods are free from defects in design, workmanship and materials. 4. The Goods correspond in every respect to any specifications, drawings, samples or descriptions provided by the Buyer to the Seller. 5. The Seller shall guarantee that the materials supplied will be new, unused and of current design not likely to be discontinued or become obsolete for the duration of the equipment's life. |
-| --- | --- |
-| 12. AFTER SALES SERVICE | The Seller must provide After Sales & Service as and when required. |
-| 13. GOVERNING LAW AND ARBITRATION | If at any time, any question, any dispute and/or differences whatsoever shall arise between the parties due to any conditions and failing amicable solution/settlement, the same shall be referred to an arbitration under the Indian Arbitration and conciliation Act 1996 or any statutory modifications of the same prevalent at the time. The right to appoint the arbitrator and to decide the place of arbitration rests with us and award of the arbitrator shall be final and binding on both the parties. Both the parties shall bear the respective cost of arbitration without any claims on another party. |
-| 14. JURISDICTION | This Contract/Order shall be construed, governed and enforced in accordance with the law of India. The parties hereby agree that Kolkata High Court ( West Bengal, India) shall have the exclusive jurisdiction for all legal disputes arising between the Parties under Purchase Order. |
-| 15. ORDER ACKNOWLEDGEMENT | Please acknowledge the receipt of this Order immediately as a token of acceptance of this order. |
-| 16. INDEMNITY | To the fullest extent permitted by law, the Supplier agrees to indemnify, hold harmless and defend the Buyer and its affiliated companies, their customers, directors, officers, employees and agents, from and against any loss, liability, cost, expenses, suits actions claims and all other obligations and proceedings whatsoever, including without limitation, all judgements rendered against and all fines and penalties imposed upon the Buyer, and any reasonable attorney's fees and any other costs of litigation (hereinafter collectively referred to as "Liabilities") arising out of death, personal injury and/or damage to property caused by the Supplier, its employees, agents, subcontractors, or in any way attributable to the Goods. |
-| 17. LIABILITY FOR DEFECTS | 1. The Seller guarantees all goods against defects due to defective materials, faulty design and workmanship for a period of twenty four (24) months from the date of acceptance of the goods by the Buyer (the "Defects Liability Period"), unless specified in the purchase Order. 2. If, during the Defects Liability Period, the Goods are found to be defective, the Seller shall, at its own cost and at the Buyer's option, either a) Repair or, at the Buyer's option, replace the defective Goods and bear all the costs of so doing including, but not limited to, all necessary transportation and access costs, or b) Reimburse the Buyer for all and any costs and expenses incurred in having the Goods repaired or replaced by a 3. In the event that the Buyer elects to proceed in accordance with "Repair or replace" and the Seller fails to repair or replace the defective Goods within Fifteen (15) days from the date of intimation, the Buyer will be entitled, at the Seller's expense, to undertake such repair or replacement itself or to have it performed by a third Party. 4. The Buyer has the right to reject the good in case it does not meet the standards specified in the Order or the product mismatches in dimensions from the original part or drawing provided by the Buyer 5. If Seller fails to rectify defects within stipulated time, Buyer may repair/replace through third party at Seller's risk and cost. | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58346 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | 18. CONFIDENTIALITY | The Seller shall treat as confidential, and require its employees, agents and subcontractors to treat as confidential, all information of a technical or commercial nature provided by the Buyer to the Seller under the Purchase Order/ Contract. This clause does not apply to information which is part, or becomes part, of the public domain other than by breach of this clause. All parts supplied under this contract must be delivered in white-label packaging. The Seller shall not affix any trademarks, logos, or brand names to the products unless expressly authorized by the Buyer in writing. Materials shall be rejected at the Buyer's premises if the Seller fails to adhere to the required product labelling standards, including the explicit prohibit on of any trademarks, logos, or brand names, in accordance with the Buyer's specifications. |
-| --- | --- |
-| 19. FORCE MAJEURE | If at any time during the continuance of this Order the performance by either party under this Order shall be prevented by reasons of any declared war, hostility, acts of the public or civil commotion, sabotage, fire, flood, earthquake, explosion, epidemic, quarantine restrictions or other acts of God, (hereinafter referred to as 'eventuality') affecting the performance and respective obligation of the parties provided that notice of the happening of any such eventuality is given by either party to the other other within fifteen (15) days from the date of the occurrence of such eventuality, neither party shall, by reason of such eventuality be entitled to terminate the Order, nor shall either party have any claim for damages against the other in respect of such non-performance and the work under this Order. The performance shall be resumed as soon as practicable after such eventuality has come to an end or ceased to exist. Under such circumstances the contractual delivery period shall be extended by a period equal to that during which such eventuality operated plus an additional period, if any, as may be considered reasonable by Purchaser and Supplier. Whether the eventuality has come to an end or ceased to exist will be deliberated and mutually settled. |
-| 20. ISO COMPLIANCE | The Seller is expected to comply with the requirement of Clause No 8.2 of ISO 9001:2015, Clause No 8.1 of ISO 14001:2015 and ISO 45001:2018 respectively. |
-| 21. TEST CERTIFICATE | Manufacturer's Guarantee and Test Certificate should be furnished by the Supplier along with the supply. |
-| 22. MANDATORY DISPATCH DOCUMENTS- Domestic | The Seller is responsible for obtaining clear receipt from the Transport Authorities specifying the goods dispatched. It shall not book any consignment on a "said to contain" basis, If it does so, the responsibility shall lie to the Seller. The Buyer shall not take any responsibility for short deliveries or wrong supply of goods when the same are booked on "said to contain" basis. The following documents are to be submitted to the consignee i.e. site stores along with each consignment. 1. Original and Duplicate copy of Commercial Invoice/ Taxable Invoice. 2. Packing list / Delivery challan. 3. Original LR/RR. 4. Copies of Test Certificate / Manufacturing Test Certificate 5. Relevant Valid ID Certificate. 6. Drawing, Operating and Maintenance Manuals, wherever applicable. 7. Any other documents as requested by Buyer |
-| 23. RIGHTS AND REMEDIES | Any terms and conditions, rights and remedies under this Order shall not be jointly, harmoniously and collectively construed to be read together and combined with any past or existing or future Order/contract/agreement/ understanding, written or oral between the Parties. |
-| 24. SUPERSEDING CLAUSE | This Purchase Order is inviolate and shall supersede all other terms via verbal communication that has been agreed upon or may be agreed by and between the Parties in future. The Terms and Conditions of this Purchase Order shall be final and binding unless otherwise amended and/or cancelled with the issuance of a fresh purchase Order upon due approval of Director of the Buyer. |
-| 25. LOGISTIC CONTACT PERSON | ARVIND SHRIVASTAV: 9717496315 | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:58347 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58326 - "POST /api/reconstruct HTTP/1.1" 200 OK
-DEBUG: Running MinerU with cmd: ['C:\\Users\\DESKTOP\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\Scripts\\mineru.exe', '-p', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_32kndpw9\\subset.pdf', '-o', 'C:\\Users\\DESKTOP\\AppData\\Local\\Temp\\mineru_32kndpw9\\out', '-m', 'auto', '--effort', 'medium', '-b', 'hybrid-http-client', '-l', 'en', '-u', 'http://127.0.0.1:8007/v1']
-INFO:     127.0.0.1:62249 - "GET /v1/models HTTP/1.1" 200 OK
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== ORIGINAL VLM SYSTEM PROMPT ======
- You are a helpful assistant. 
-=========================
-====== VLM RAW OUTPUT START ======
- "PURCHASE ORDER" 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62256 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Entity | Value |
-| --- | --- |
-| BANSAL POLYPLAST PRIVATE LIMITED | www.bansalpolyplast.com | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62255 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- ```json
-{
-  "logo": {
-    "type": "circle",
-    "color": "white",
-    "border": {
-      "color": "orange",
-      "width": 5
-    },
-    "content": {
-      "type": "text",
-      "content": "BP",
-      "style": {
-        "font": "bold",
-        "size": 50,
-        "color": {
-          "primary": "orange",
-          "secondary": "blue"
-        }
-      }
-    }
-  }
-}
-``` 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62254 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Sr. No. | Item Details | HSN/SAC | Qty | UOM | Unit Rate | Discount | GST | Amount |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 30 SQ MM ACSR CONDUCTOR (WEASEL) | 76042910 | 10000 | MTR | 48 | 0% | - | 480,000 |
-|  |  |  |  |  |  |  | Sub Total (INR) | 480,000 |
-|  |  |  |  |  |  |  | GST 18% | 86400 |
-|  |  |  |  |  |  |  | Adjustment | 0 |
-|  |  |  |  |  |  |  | Total Amount | INR 566,400 | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62257 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | Payment Terms | 20% Payment of the basic value in advance, 60% Payment along with GST before dispatch of material 20% Payment within 3 Months from the date of delivery at site. The quoted prices shall remain firm and fixed for the entire duration of the supply and shall not be subjected to escalation of any kind, unless specified in the purchase Order/contract. The price payable for the Goods shall be that stated in the Order and, unless otherwise stated, shall be inclusive of all charges including, but not limited to packaging material, packing, shipping, loading, carriage, insurance and delivery of the Goods to the delivery address and any duties, imposts, levies or taxes if any. Buyer's payment process will be by E -payment and RTGS/NEFT charges, if any, will be borne by the Seller. |
-| --- | --- |
-| Taxes & Duties | 1. GST extra as applicable. 2. Seller shall ensure that the HSN code pertaining to the supplied items shall be mentioned in the invoices, failing which the invoice shall be returned to the vendor and will be processed only upon receipt of the corrected invoice, incorporating the HSN codes. 3. Seller should mention theirs and Buyer's GSTIN number in all invoices and corresponding documents. 4. The Seller shall further ensure that original invoices should be provided at the time of delivering the materials. |
-| Insurance | Insurance will be Buyer's part and Seller should provide all the details regarding Insurance. |
-| Delivery Schedule | 15 days from date of Issuance of PO/Acceptance of prepayment. Timely delivery is essential for this Order. All materials must be delivered in one lot unless specified and mutually agreed between both Buyer and Seller. In the event of delayed delivery, uninformed staggered delivery or any other issues, Buyer reserves the right to cancel the Order or impose penalty on Seller at any time. The Seller shall ensure that each delivery is accompanied by a delivery note which is prominently displayed and which shows, inter alia, the Order number, date of Order, number of packages and contents and, in the case of part delivery, the outstanding balance remaining to be delivered. The Goods shall be delivered as per the incoterms specified in the Order and at the time and in the manner specified in the Order. The Buyer may specify in writing to the Seller at any time before delivery, another time place or manner for delivery, in which case that other time, place or manner applies in place of those stated in the Order. Where access to premises is necessary in connection with delivery, the Seller and its Sub-Contractors shall at all times comply with the requirements of the Buyer's authorized representative. The Buyer will not be required to pay for any Goods which are delivered to the Buyer in excess of the quantities Ordered by the Buyer. Any such excess will be and will remain at the Seller's risk and will be returnable at the Seller's expense. If the goods are dispatched through a mode of transport and/or carrier not approved by Buyer, any incidence of demurrage and wharfage shall be debited to the Seller's A/c. |
-| Packing & Forwarding Charges | Prices are Inclusive of Packing & Forwarding. |
-| Environmental Consideration | 1. Don't use plastic, polythene or polyfilm as packaging material. If there is no substitute available, ensure use of recyclable/recycled plastic materials. 2. Ensure compliance of PUC for each and every transport vehicle. 3. In case of liquid hazardous chemical, ensure zero leakage & spillage of chemicals. |
-| Damages | The Seller understands that time is of the essence of this Order. Notwithstanding the above, for any delay beyond the stipulated delivery/completion period as mentioned herein, Buyer reserves its right to impose penalty @ 0.5 % per week or part thereof, subject to a maximum of 5.0 % of the total Order value, without requirement of proof of actual loss and without prejudice to other remedies available to Buyer. |
-| Intimation of Dispatch | One copy of dispatch document of each consignment should invariably be forwarded to the undersigned. | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62258 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | 11. GUARANTEE/WARRANTY | The material will be guaranteed for satisfactory performance for a period of 12 (Twelve) months from the date of installation or 18 (Eighteen) from the date of receipt and acceptance by the consignee. - This to be filled as per mutual agreement. The Seller warrants to the Buyer that: 1. It has clear title to the Goods and that they are being delivered free of all and any liens and encumbrances. 2. The Goods are of merchantable quality and fit for the purpose for which they are required by the Buyer under the Contract. 3. The Goods are free from defects in design, workmanship and materials. 4. The Goods correspond in every respect to any specifications, drawings, samples or descriptions provided by the Buyer to the Seller. 5. The Seller shall guarantee that the materials supplied will be new, unused and of current design not likely to be discontinued or become obsolete for the duration of the equipment's life. |
-| --- | --- |
-| 12. AFTER SALES SERVICE | The Seller must provide After Sales & Service as and when required. |
-| 13. GOVERNING LAW AND ARBITRATION | If at any time, any question, any dispute and/or differences whatsoever shall arise between the parties due to any conditions and failing amicable solution/settlement, the same shall be referred to an arbitration under the Indian Arbitration and conciliation Act 1996 or any statutory modifications of the same prevalent at the time. The right to appoint the arbitrator and to decide the place of arbitration rests with us and award of the arbitrator shall be final and binding on both the parties. Both the parties shall bear the respective cost of arbitration without any claims on another party. |
-| 14. JURISDICTION | This Contract/Order shall be construed, governed and enforced in accordance with the law of India. The parties hereby agree that Kolkata High Court ( West Bengal, India) shall have the exclusive jurisdiction for all legal disputes arising between the Parties under Purchase Order. |
-| 15. ORDER ACKNOWLEDGEMENT | Please acknowledge the receipt of this Order immediately as a token of acceptance of this order. |
-| 16. INDEMNITY | To the fullest extent permitted by law, the Supplier agrees to indemnify, hold harmless and defend the Buyer and its affiliated companies, their customers, directors, officers, employees and agents, from and against any loss, liability, cost, expenses, suits actions claims and all other obligations and proceedings whatsoever, including without limitation, all judgements rendered against and all fines and penalties imposed upon the Buyer, and any reasonable attorney's fees and any other costs of litigation (hereinafter collectively referred to as "Liabilities") arising out of death, personal injury and/or damage to property caused by the Supplier, its employees, agents, subcontractors, or in any way attributable to the Goods. |
-| 17. LIABILITY FOR DEFECTS | 1. The Seller guarantees all goods against defects due to defective materials, faulty design and workmanship for a period of twenty four (24) months from the date of acceptance of the goods by the Buyer (the "Defects Liability Period"), unless specified in the purchase Order. 2. If, during the Defects Liability Period, the Goods are found to be defective, the Seller shall, at its own cost and at the Buyer's option, either a) Repair or, at the Buyer's option, replace the defective Goods and bear all the costs of so doing including, but not limited to, all necessary transportation and access costs, or b) Reimburse the Buyer for all and any costs and expenses incurred in having the Goods repaired or replaced by a 3. In the event that the Buyer elects to proceed in accordance with "Repair or replace" and the Seller fails to repair or replace the defective Goods within Fifteen (15) days from the date of intimation, the Buyer will be entitled, at the Seller's expense, to undertake such repair or replacement itself or to have it performed by a third Party. 4. The Buyer has the right to reject the good in case it does not meet the standards specified in the Order or the product mismatches in dimensions from the original part or drawing provided by the Buyer 5. If Seller fails to rectify defects within stipulated time, Buyer may repair/replace through third party at Seller's risk and cost. | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62259 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-====== VLM RAW OUTPUT START ======
- | 18. CONFIDENTIALITY | The Seller shall treat as confidential, and require its employees, agents and subcontractors to treat as confidential, all information of a technical or commercial nature provided by the Buyer to the Seller under the Purchase Order/ Contract. This clause does not apply to information which is part, or becomes part, of the public domain other than by breach of this clause. All parts supplied under this contract must be delivered in white-label packaging. The Seller shall not affix any trademarks, logos, or brand names to the products unless expressly authorized by the Buyer in writing. Materials shall be rejected at the Buyer's premises if the Seller fails to adhere to the required product labelling standards, including the explicit prohibit on of any trademarks, logos, or brand names, in accordance with the Buyer's specifications. |
-| --- | --- |
-| 19. FORCE MAJEURE | If at any time during the continuance of this Order the performance by either party under this Order shall be prevented by reasons of any declared war, hostility, acts of the public or civil commotion, sabotage, fire, flood, earthquake, explosion, epidemic, quarantine restrictions or other acts of God, (hereinafter referred to as 'eventuality') affecting the performance and respective obligation of the parties provided that notice of the happening of any such eventuality is given by either party to the other other within fifteen (15) days from the date of the occurrence of such eventuality, neither party shall, by reason of such eventuality be entitled to terminate the Order, nor shall either party have any claim for damages against the other in respect of such non-performance and the work under this Order. The performance shall be resumed as soon as practicable after such eventuality has come to an end or ceased to exist. Under such circumstances the contractual delivery period shall be extended by a period equal to that during which such eventuality operated plus an additional period, if any, as may be considered reasonable by Purchaser and Supplier. Whether the eventuality has come to an end or ceased to exist will be deliberated and mutually settled. |
-| 20. ISO COMPLIANCE | The Seller is expected to comply with the requirement of Clause No 8.2 of ISO 9001:2015, Clause No 8.1 of ISO 14001:2015 and ISO 45001:2018 respectively. |
-| 21. TEST CERTIFICATE | Manufacturer's Guarantee and Test Certificate should be furnished by the Supplier along with the supply. |
-| 22. MANDATORY DISPATCH DOCUMENTS- Domestic | The Seller is responsible for obtaining clear receipt from the Transport Authorities specifying the goods dispatched. It shall not book any consignment on a "said to contain" basis, If it does so, the responsibility shall lie to the Seller. The Buyer shall not take any responsibility for short deliveries or wrong supply of goods when the same are booked on "said to contain" basis. The following documents are to be submitted to the consignee i.e. site stores along with each consignment. 1. Original and Duplicate copy of Commercial Invoice/ Taxable Invoice. 2. Packing list / Delivery challan. 3. Original LR/RR. 4. Copies of Test Certificate / Manufacturing Test Certificate 5. Relevant Valid ID Certificate. 6. Drawing, Operating and Maintenance Manuals, wherever applicable. 7. Any other documents as requested by Buyer |
-| 23. RIGHTS AND REMEDIES | Any terms and conditions, rights and remedies under this Order shall not be jointly, harmoniously and collectively construed to be read together and combined with any past or existing or future Order/contract/agreement/ understanding, written or oral between the Parties. |
-| 24. SUPERSEDING CLAUSE | This Purchase Order is inviolate and shall supersede all other terms via verbal communication that has been agreed upon or may be agreed by and between the Parties in future. The Terms and Conditions of this Purchase Order shall be final and binding unless otherwise amended and/or cancelled with the issuance of a fresh purchase Order upon due approval of Director of the Buyer. |
-| 25. LOGISTIC CONTACT PERSON | ARVIND SHRIVASTAV: 9717496315 | 
-====== VLM RAW OUTPUT END ======
-INFO:     127.0.0.1:62260 - "POST /v1/chat/completions HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57852 - "POST /api/reconstruct HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59757 - "POST /v1/chat/completions HTTP/1.1" 200 OK
