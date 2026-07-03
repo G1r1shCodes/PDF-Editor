@@ -5,168 +5,514 @@
                 {
                     "type": "table",
                     "bbox": [
-                        10,
-                        235,
-                        577,
-                        666
+                        17,
+                        114,
+                        592,
+                        661
                     ],
                     "blocks": [
                         {
                             "bbox": [
-                                16,
-                                186,
-                                546,
-                                227
-                            ],
-                            "type": "table_caption",
-                            "angle": 0,
-                            "lines": [
-                                {
-                                    "bbox": [
-                                        16,
-                                        186,
-                                        546,
-                                        227
-                                    ],
-                                    "spans": [
-                                        {
-                                            "bbox": [
-                                                16,
-                                                186,
-                                                546,
-                                                227
-                                            ],
-                                            "type": "text",
-                                            "content": "Specification for XLPE cable for Woking voltage up to and including 1.1 KV, IS:7098 (Part-1), 4 x 400 sq.mm (aluminium)"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "index": 0
-                        },
-                        {
-                            "bbox": [
-                                10,
-                                235,
-                                577,
-                                666
+                                17,
+                                114,
+                                592,
+                                661
                             ],
                             "type": "table_body",
                             "angle": 0,
                             "lines": [
                                 {
                                     "bbox": [
-                                        10,
-                                        235,
-                                        577,
-                                        666
+                                        17,
+                                        114,
+                                        592,
+                                        661
                                     ],
                                     "spans": [
                                         {
                                             "bbox": [
-                                                10,
-                                                235,
-                                                577,
-                                                666
+                                                17,
+                                                114,
+                                                592,
+                                                661
                                             ],
                                             "type": "table",
                                             "html": "",
-                                            "image_path": "5ca02e9765c90e83791362da4124a90be397c9c8176c365bd23b537248dfe637.jpg"
+                                            "image_path": "225dd0d8c538a4b679c60832acd2e55ed1abb3bc9a755d1a0c760a4ef215158b.jpg"
                                         }
                                     ]
                                 }
                             ],
-                            "index": 1
+                            "index": 3
+                        }
+                    ],
+                    "index": 3
+                }
+            ],
+            "discarded_blocks": [
+                {
+                    "bbox": [
+                        28,
+                        56,
+                        86,
+                        108
+                    ],
+                    "type": "header",
+                    "angle": 0,
+                    "lines": [
+                        {
+                            "bbox": [
+                                28,
+                                56,
+                                86,
+                                108
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        28,
+                                        56,
+                                        86,
+                                        108
+                                    ],
+                                    "type": "text",
+                                    "content": "{\n\"logo\": {\n\"type\": \"circle\",\n\"color\": \"white\",\n\"border\": {\n\"color\": \"orange\",\n\"width\": 5\n},\n\"content\": {\n\"type\": \"text\",\n\"content\": \"BP\",\n\"style\": {\n\"font\": \"bold\",\n\"size\": 50,\n\"color\": {\n\"primary\": \"orange\",\n\"secondary\": \"blue\"\n}\n}\n}\n}\n}"
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 0
+                },
+                {
+                    "bbox": [
+                        131,
+                        54,
+                        312,
+                        78
+                    ],
+                    "type": "header",
+                    "angle": 0,
+                    "lines": [
+                        {
+                            "bbox": [
+                                131,
+                                54,
+                                312,
+                                78
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        131,
+                                        54,
+                                        312,
+                                        78
+                                    ],
+                                    "type": "text",
+                                    "content": "| Entity | Value |\n| --- | --- |\n| BANSAL POLYPLAST PRIVATE LIMITED | www.bansalpolyplast.com |"
+                                }
+                            ]
                         }
                     ],
                     "index": 1
+                },
+                {
+                    "bbox": [
+                        427,
+                        55,
+                        511,
+                        65
+                    ],
+                    "type": "header",
+                    "angle": 0,
+                    "lines": [
+                        {
+                            "bbox": [
+                                427,
+                                55,
+                                511,
+                                65
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        427,
+                                        55,
+                                        511,
+                                        65
+                                    ],
+                                    "type": "text",
+                                    "content": "\"PURCHASE ORDER\""
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 2
                 }
             ],
-            "discarded_blocks": [],
             "page_size": [
-                595,
-                842
+                612,
+                792
             ],
             "page_idx": 0,
             "para_blocks": [
                 {
                     "type": "table",
                     "bbox": [
-                        10,
-                        235,
-                        577,
-                        666
+                        17,
+                        114,
+                        592,
+                        661
                     ],
                     "blocks": [
                         {
                             "bbox": [
-                                16,
-                                186,
-                                546,
-                                227
-                            ],
-                            "type": "table_caption",
-                            "angle": 0,
-                            "lines": [
-                                {
-                                    "bbox": [
-                                        16,
-                                        186,
-                                        546,
-                                        227
-                                    ],
-                                    "spans": [
-                                        {
-                                            "bbox": [
-                                                16,
-                                                186,
-                                                546,
-                                                227
-                                            ],
-                                            "type": "text",
-                                            "content": "Specification for XLPE cable for Woking voltage up to and including 1.1 KV, IS:7098 (Part-1), 4 x 400 sq.mm (aluminium)"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "index": 0
-                        },
-                        {
-                            "bbox": [
-                                10,
-                                235,
-                                577,
-                                666
+                                17,
+                                114,
+                                592,
+                                661
                             ],
                             "type": "table_body",
                             "angle": 0,
                             "lines": [
                                 {
                                     "bbox": [
-                                        10,
-                                        235,
-                                        577,
-                                        666
+                                        17,
+                                        114,
+                                        592,
+                                        661
                                     ],
                                     "spans": [
                                         {
                                             "bbox": [
-                                                10,
-                                                235,
-                                                577,
-                                                666
+                                                17,
+                                                114,
+                                                592,
+                                                661
                                             ],
                                             "type": "table",
                                             "html": "",
-                                            "image_path": "5ca02e9765c90e83791362da4124a90be397c9c8176c365bd23b537248dfe637.jpg"
+                                            "image_path": "225dd0d8c538a4b679c60832acd2e55ed1abb3bc9a755d1a0c760a4ef215158b.jpg"
                                         }
                                     ]
                                 }
                             ],
-                            "index": 1
+                            "index": 3
                         }
                     ],
-                    "index": 1
+                    "index": 3
+                }
+            ]
+        },
+        {
+            "preproc_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        17,
+                        53,
+                        592,
+                        639
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                17,
+                                53,
+                                592,
+                                639
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        17,
+                                        53,
+                                        592,
+                                        639
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                17,
+                                                53,
+                                                592,
+                                                639
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "e866321f96278b328d3126a5f2a88a8ca007d6a90414799e79d3091b2ea7c50a.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        }
+                    ],
+                    "index": 0
+                }
+            ],
+            "discarded_blocks": [],
+            "page_size": [
+                612,
+                792
+            ],
+            "page_idx": 1,
+            "para_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        17,
+                        53,
+                        592,
+                        639
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                17,
+                                53,
+                                592,
+                                639
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        17,
+                                        53,
+                                        592,
+                                        639
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                17,
+                                                53,
+                                                592,
+                                                639
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "e866321f96278b328d3126a5f2a88a8ca007d6a90414799e79d3091b2ea7c50a.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        }
+                    ],
+                    "index": 0
+                }
+            ]
+        },
+        {
+            "preproc_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        17,
+                        53,
+                        592,
+                        624
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                17,
+                                53,
+                                592,
+                                624
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        17,
+                                        53,
+                                        592,
+                                        624
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                17,
+                                                53,
+                                                592,
+                                                624
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "f975553f9f0ee17b01d5743c7351cbad070a5984197e6b243a2d37f91fdba0d2.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        }
+                    ],
+                    "index": 0
+                }
+            ],
+            "discarded_blocks": [],
+            "page_size": [
+                612,
+                792
+            ],
+            "page_idx": 2,
+            "para_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        17,
+                        53,
+                        592,
+                        624
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                17,
+                                53,
+                                592,
+                                624
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        17,
+                                        53,
+                                        592,
+                                        624
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                17,
+                                                53,
+                                                592,
+                                                624
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "f975553f9f0ee17b01d5743c7351cbad070a5984197e6b243a2d37f91fdba0d2.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        }
+                    ],
+                    "index": 0
+                }
+            ]
+        },
+        {
+            "preproc_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        17,
+                        53,
+                        592,
+                        655
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                17,
+                                53,
+                                592,
+                                655
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        17,
+                                        53,
+                                        592,
+                                        655
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                17,
+                                                53,
+                                                592,
+                                                655
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "fcff4d081b4be473d009b7ba5d93bdac0eded20388385a248e421d67e9afe43e.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        }
+                    ],
+                    "index": 0
+                }
+            ],
+            "discarded_blocks": [],
+            "page_size": [
+                612,
+                792
+            ],
+            "page_idx": 3,
+            "para_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        17,
+                        53,
+                        592,
+                        655
+                    ],
+                    "blocks": [
+                        {
+                            "bbox": [
+                                17,
+                                53,
+                                592,
+                                655
+                            ],
+                            "type": "table_body",
+                            "angle": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        17,
+                                        53,
+                                        592,
+                                        655
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                17,
+                                                53,
+                                                592,
+                                                655
+                                            ],
+                                            "type": "table",
+                                            "html": "",
+                                            "image_path": "fcff4d081b4be473d009b7ba5d93bdac0eded20388385a248e421d67e9afe43e.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0
+                        }
+                    ],
+                    "index": 0
                 }
             ]
         }

@@ -948,7 +948,7 @@ export default function App() {
   const [aiError, setAiError] = useState(null);
   const [aiMessage, setAiMessage] = useState(null);
   const [scanEditMode, setScanEditMode] = useState(null);  // 'reconstruct' | 'ai_image'
-  const [mineruBackend, setMineruBackend] = useState("pipeline");
+  const [mineruBackend, setMineruBackend] = useState("hybrid-http-client");
   const [mineruEffort, setMineruEffort] = useState("medium");
   const fileInputRef = useRef(null);
 

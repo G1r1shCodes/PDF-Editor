@@ -1,17 +1,87 @@
 [
     {
         "type": "table",
-        "img_path": "images/5ca02e9765c90e83791362da4124a90be397c9c8176c365bd23b537248dfe637.jpg",
-        "table_caption": [
-            "Specification for XLPE cable for Woking voltage up to and including 1.1 KV, IS:7098 (Part-1), 4 x 400 sq.mm (aluminium)"
-        ],
+        "img_path": "images/225dd0d8c538a4b679c60832acd2e55ed1abb3bc9a755d1a0c760a4ef215158b.jpg",
+        "table_caption": [],
         "table_footnote": [],
         "bbox": [
-            16,
-            279,
-            969,
-            790
+            27,
+            143,
+            967,
+            834
         ],
         "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "{\n\"logo\": {\n\"type\": \"circle\",\n\"color\": \"white\",\n\"border\": {\n\"color\": \"orange\",\n\"width\": 5\n},\n\"content\": {\n\"type\": \"text\",\n\"content\": \"BP\",\n\"style\": {\n\"font\": \"bold\",\n\"size\": 50,\n\"color\": {\n\"primary\": \"orange\",\n\"secondary\": \"blue\"\n}\n}\n}\n}\n}",
+        "bbox": [
+            45,
+            70,
+            140,
+            136
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "| Entity | Value |\n| --- | --- |\n| BANSAL POLYPLAST PRIVATE LIMITED | www.bansalpolyplast.com |",
+        "bbox": [
+            214,
+            68,
+            509,
+            98
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "\"PURCHASE ORDER\"",
+        "bbox": [
+            697,
+            69,
+            834,
+            82
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "table",
+        "img_path": "images/e866321f96278b328d3126a5f2a88a8ca007d6a90414799e79d3091b2ea7c50a.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "bbox": [
+            27,
+            66,
+            967,
+            806
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "table",
+        "img_path": "images/f975553f9f0ee17b01d5743c7351cbad070a5984197e6b243a2d37f91fdba0d2.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "bbox": [
+            27,
+            66,
+            967,
+            787
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "table",
+        "img_path": "images/fcff4d081b4be473d009b7ba5d93bdac0eded20388385a248e421d67e9afe43e.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "bbox": [
+            27,
+            66,
+            967,
+            827
+        ],
+        "page_idx": 3
     }
 ]

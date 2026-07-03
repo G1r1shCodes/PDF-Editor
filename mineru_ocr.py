@@ -100,7 +100,7 @@ def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, b
     
     if backend in ["hybrid-http-client", "vlm-http-client"]:
         # Route to local proxy to enforce strict JSON/Markdown output formatting
-        proxy_url = os.environ.get("MINERU_PROXY_URL", "http://127.0.0.1:8001/v1")
+        proxy_url = os.environ.get("MINERU_PROXY_URL", "http://127.0.0.1:8007/v1")
         cmd.extend(["-u", proxy_url])
         
     print(f"DEBUG: Running MinerU with cmd: {cmd}", flush=True)

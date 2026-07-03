@@ -811,9 +811,12 @@ def _clean_vlm_output(content: str) -> str:
     ticks = chr(96) * 3
     pattern = rf"^{ticks}[a-zA-Z]*\s*\n?(.*?)\n?{ticks}\s*$"
     fence = re.match(pattern, content, flags=re.DOTALL)
-    if fence:
-        content = fence.group(1).strip()
+    # if fence:
+    #     content = fence.group(1).strip()
         
+    # Strip leading spaces from every line to ensure MinerU recognizes Markdown tables
+    content = "\n".join(line.lstrip() for line in content.split("\n"))
+    
     return content
 
 import asyncio
@@ -836,11 +839,11 @@ async def vlm_proxy_chat_completions(req: Request):
         "If the image contains a table, you MUST extract the entire table structure "
         "including all rows and columns into standard Markdown table format. "
         "DO NOT include any conversational filler, explanations, or introductory text. "
-        "Do NOT wrap your output in ```markdown code blocks."
     )
     
     for msg in messages:
         if msg.get("role") == "system":
+            print("====== ORIGINAL VLM SYSTEM PROMPT ======\n", msg.get("content", ""), "\n=========================", flush=True)
             has_system = True
             if isinstance(msg.get("content"), str):
                 msg["content"] += instruction
@@ -850,6 +853,7 @@ async def vlm_proxy_chat_completions(req: Request):
                     "text": instruction
                 })
         elif msg.get("role") == "user":
+            print("====== ORIGINAL VLM USER PROMPT ======\n", str(msg.get("content", ""))[:1000], "\n=========================", flush=True)
             if isinstance(msg.get("content"), str):
                 msg["content"] += "\n\n" + instruction
             elif isinstance(msg.get("content"), list):
