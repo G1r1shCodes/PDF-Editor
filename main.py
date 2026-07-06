@@ -833,6 +833,11 @@ async def vlm_proxy_chat_completions(req: Request, session_id: str = None):
     body = await req.json()
     auth_header = req.headers.get("authorization", "")
     
+    if ":::SESSION:::" in auth_header:
+        auth_header, extracted_session = auth_header.split(":::SESSION:::", 1)
+        if not session_id:
+            session_id = extracted_session
+    
     # 1. Modify prompt to enforce strict output
     messages = body.get("messages", [])
     has_system = False
@@ -878,10 +883,23 @@ async def vlm_proxy_chat_completions(req: Request, session_id: str = None):
                     img_url = part["image_url"]["url"]
                     if "base64," in img_url:
                         img_b64 = img_url.split("base64,")[-1]
-                        if len(img_b64) > 200:
-                            img_key = img_b64[:100] + img_b64[-100:]
-                        else:
-                            img_key = img_b64
+                        import io
+                        import base64
+                        from PIL import Image
+                        try:
+                            image_data = base64.b64decode(img_b64)
+                            img = Image.open(io.BytesIO(image_data)).convert('L')
+                            img = img.resize((17, 16), Image.Resampling.LANCZOS)
+                            diff = []
+                            for row in range(16):
+                                for col in range(16):
+                                    pixel_left = img.getpixel((col, row))
+                                    pixel_right = img.getpixel((col + 1, row))
+                                    diff.append('1' if pixel_left > pixel_right else '0')
+                            img_key = hex(int(''.join(diff), 2))[2:]
+                        except Exception as e:
+                            print(f"DEBUG DHASH ERROR: {e}")
+                            img_key = img_b64[:100] + img_b64[-100:] if len(img_b64) > 200 else img_b64
     
     # 2. Determine upstream. NVIDIA NIM only (Groq's vision models are unstable /
     # deprecated), unless an explicit vlm_base_url header points at a local NIM.

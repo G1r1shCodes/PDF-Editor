@@ -101,8 +101,7 @@ def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, b
     if backend in ["hybrid-http-client", "vlm-http-client"]:
         # Route to local proxy to enforce strict JSON/Markdown output formatting
         proxy_url = os.environ.get("MINERU_PROXY_URL", "http://127.0.0.1:8007/v1")
-        if session_id:
-            proxy_url += f"?session_id={session_id}"
+        # session_id is now passed securely via MINERU_VL_API_KEY env var below
         cmd.extend(["-u", proxy_url])
         
     print(f"DEBUG: Running MinerU with cmd: {cmd}", flush=True)
@@ -113,7 +112,7 @@ def _run_mineru_cli(input_pdf: Path, out_dir: Path, device: str, timeout: int, b
     env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:32,garbage_collection_threshold:0.8"
     
     if backend in ["hybrid-http-client", "vlm-http-client"] and nvidia_api_key:
-        env["MINERU_VL_API_KEY"] = nvidia_api_key
+        env["MINERU_VL_API_KEY"] = f"{nvidia_api_key}:::SESSION:::{session_id}" if session_id else nvidia_api_key
         env["MINERU_VL_MODEL_NAME"] = "nvidia/llama-3.1-nemotron-nano-vl-8b-v1"
         
     try:
@@ -299,14 +298,41 @@ def extract_layouts_mineru_bulk(
                     full_img_path = content_list_path.parent / img_path
                     if full_img_path.exists():
                         import base64
-                        with open(full_img_path, "rb") as f:
-                            img_b64 = base64.b64encode(f.read()).decode("utf-8")
-                            if len(img_b64) > 200:
-                                img_key = img_b64[:100] + img_b64[-100:]
-                            else:
-                                img_key = img_b64
-                            if img_key in vlm_tables:
-                                text = vlm_tables[img_key]
+                        import io
+                        from PIL import Image
+                        try:
+                            with open(full_img_path, "rb") as f:
+                                image_data = f.read()
+                            img = Image.open(io.BytesIO(image_data)).convert('L')
+                            img = img.resize((17, 16), Image.Resampling.LANCZOS)
+                            diff = []
+                            for row in range(16):
+                                for col in range(16):
+                                    pixel_left = img.getpixel((col, row))
+                                    pixel_right = img.getpixel((col + 1, row))
+                                    diff.append('1' if pixel_left > pixel_right else '0')
+                            img_key = hex(int(''.join(diff), 2))[2:]
+                            
+                            def get_hamming_distance(hash1, hash2):
+                                try:
+                                    bin1 = bin(int(hash1, 16))[2:].zfill(256)
+                                    bin2 = bin(int(hash2, 16))[2:].zfill(256)
+                                    return sum(c1 != c2 for c1, c2 in zip(bin1, bin2))
+                                except Exception:
+                                    return 9999
+                                    
+                            best_match = None
+                            min_dist = 9999
+                            for key in vlm_tables:
+                                dist = get_hamming_distance(img_key, key)
+                                if dist < min_dist:
+                                    min_dist = dist
+                                    best_match = key
+                            if best_match and min_dist < 20:  # Allow small differences (up to 20 bits) for JPG vs PNG
+                                text = vlm_tables[best_match]
+                                print(f"DEBUG: Matched table via dhash with distance {min_dist}")
+                        except Exception as e:
+                            print(f"DEBUG: Failed to match table image hash: {e}")
 
                 if table_body:
                     tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', table_body, re.IGNORECASE | re.DOTALL)
