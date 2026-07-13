@@ -10,6 +10,44 @@ try:
 except ImportError:
     async_playwright = None
 
+def _apply_inline_styles(elem: dict, text: str) -> str:
+    if elem.get("type") not in ["paragraph", "header", "title", "list"]:
+        return text
+        
+    font_name = elem.get("font_name")
+    font_size = elem.get("font_size")
+    color = elem.get("color")
+    
+    style_parts = []
+    if font_name:
+        font_css = None
+        if "courier" in font_name.lower() or "mono" in font_name.lower():
+            font_css = "Courier New, monospace"
+        elif "times" in font_name.lower() or "serif" in font_name.lower():
+            font_css = "Times New Roman, serif"
+        elif "helvetica" in font_name.lower() or "arial" in font_name.lower():
+            font_css = "Helvetica, Arial, sans-serif"
+        if font_css:
+            style_parts.append(f"font-family: {font_css}")
+            
+    if font_size:
+        style_parts.append(f"font-size: {font_size}pt")
+    if color:
+        style_parts.append(f"color: {color}")
+        
+    is_bold = elem.get("bold") or (font_name and "bold" in font_name.lower())
+    is_italic = elem.get("italic") or (font_name and ("italic" in font_name.lower() or "oblique" in font_name.lower()))
+    
+    if is_bold:
+        style_parts.append("font-weight: bold")
+    if is_italic:
+        style_parts.append("font-style: italic")
+        
+    if style_parts:
+        style_str = "; ".join(style_parts)
+        return f'<span style="{style_str}">{text}</span>'
+    return text
+
 def _document_to_markdown(doc: dict) -> str:
     md_lines = []
     for page in doc.get("pages", []):
@@ -17,15 +55,18 @@ def _document_to_markdown(doc: dict) -> str:
             typ = elem.get("type")
             text = elem.get("text", "")
             if typ in ["header", "title"]:
-                md_lines.append(f"## {text}\n")
+                styled_text = _apply_inline_styles(elem, text)
+                md_lines.append(f"## {styled_text}\n")
             elif typ == "paragraph":
-                md_lines.append(f"{text}\n")
+                styled_text = _apply_inline_styles(elem, text)
+                md_lines.append(f"{styled_text}\n")
             elif typ == "list":
                 items = elem.get("items", [])
                 if not items and text:
                     items = [l for l in text.split("\n") if l.strip()]
                 for item in items:
-                    md_lines.append(f"- {item}")
+                    styled_item = _apply_inline_styles(elem, item)
+                    md_lines.append(f"- {styled_item}")
                 md_lines.append("\n")
             elif typ == "table":
                 rows = elem.get("rows", [])
@@ -62,7 +103,7 @@ def _document_to_markdown(doc: dict) -> str:
         
     return "\n".join(md_lines)
 
-async def generate_pdf(document: dict, output_path: Path) -> None:
+async def generate_pdf(document: dict, output_path: Path, font_family: str = None) -> None:
     """Render a reconstructed (and optionally edited) document to a new PDF."""
     if not async_playwright:
         raise RuntimeError("Playwright is not installed. Please run `pip install playwright` and `playwright install chromium`.")
@@ -72,6 +113,12 @@ async def generate_pdf(document: dict, output_path: Path) -> None:
     # Convert MD to HTML with python-markdown-math extension to preserve LaTeX underscores
     # and the 'tables' extension to properly parse markdown tables into HTML <table> tags.
     html_content = markdown.markdown(md_content, extensions=['mdx_math', 'tables'])
+
+    font_css = "Helvetica, Arial, sans-serif"
+    if font_family == "Times Roman" or font_family == "serif":
+        font_css = "Times New Roman, Times, serif"
+    elif font_family == "Courier" or font_family == "monospace":
+        font_css = "Courier New, Courier, monospace"
 
     template = f"""
     <!DOCTYPE html>
@@ -90,7 +137,7 @@ async def generate_pdf(document: dict, output_path: Path) -> None:
         </script>
         <style>
           @page {{ margin: 20mm; }}
-          body {{ font-family: 'Helvetica', 'Arial', sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 0; font-size: 14px; }}
+          body {{ font-family: {font_css}; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 0; font-size: 14px; }}
           table {{ border-collapse: collapse; width: 100%; margin-bottom: 1.5em; }}
           th, td {{ border: 1px solid #ccc; padding: 8px; text-align: left; }}
           th {{ background-color: #f4f4f4; }}

@@ -28,6 +28,22 @@ const FONT_CSS_MAP = {
   "Courier Bold": "Courier New, Courier, monospace",
 };
 
+// Measure text width using a canvas and return a scaled-down fontSize if it exceeds maxWidth
+function fitFontSize(text, fontFamily, baseFontSize, maxWidth, fontWeight = "normal", fontStyle = "normal") {
+  if (!text || maxWidth <= 0 || text.includes('\n')) return baseFontSize;
+  try {
+    const canvas = fitFontSize._c || (fitFontSize._c = document.createElement('canvas'));
+    const ctx = canvas.getContext('2d');
+    ctx.font = `${fontStyle} ${fontWeight} ${baseFontSize}px ${fontFamily}`;
+    const measured = ctx.measureText(text).width;
+    if (measured <= maxWidth) return baseFontSize;
+    // Scale down proportionally, floor at 70% for legibility
+    return Math.max(baseFontSize * (maxWidth / measured) * 0.98, baseFontSize * 0.70);
+  } catch {
+    return baseFontSize;
+  }
+}
+
 // ── Components ────────────────────────────────────────────────────────────────
 
 function Spinner() {
@@ -43,7 +59,7 @@ function Spinner() {
   );
 }
 
-function ToolBar({ activeTool, setActiveTool, onSave, saving, hasDoc }) {
+function ToolBar({ activeTool, setActiveTool, onSave, saving, hasDoc, onUndo, onRedo, canUndo, canRedo, documentFont, setDocumentFont }) {
   const tools = [
     { id: "select", icon: "[]", label: "Select Region" },
     { id: "edit", icon: "T", label: "Edit Text" },
@@ -76,7 +92,73 @@ function ToolBar({ activeTool, setActiveTool, onSave, saving, hasDoc }) {
           {t.icon} {t.label}
         </button>
       ))}
+
+      {hasDoc && (
+        <>
+          <div style={{ width: 1, height: 24, background: "#1e293b", margin: "0 4px" }} />
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Undo"
+            style={{
+              background: "none",
+              border: "none",
+              color: canUndo ? "#f8fafc" : "#475569",
+              cursor: canUndo ? "pointer" : "not-allowed",
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "6px 10px",
+              borderRadius: 4,
+            }}
+          >
+            ↶ Undo
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo"
+            style={{
+              background: "none",
+              border: "none",
+              color: canRedo ? "#f8fafc" : "#475569",
+              cursor: canRedo ? "pointer" : "not-allowed",
+              fontSize: 13,
+              fontWeight: 600,
+              padding: "6px 10px",
+              borderRadius: 4,
+            }}
+          >
+            ↷ Redo
+          </button>
+        </>
+      )}
+
       <div style={{ flex: 1 }} />
+
+      {hasDoc && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 12 }}>
+          <span style={{ fontSize: 12, color: "#94a3b8" }}>Doc Font:</span>
+          <select
+            value={documentFont}
+            onChange={e => setDocumentFont(e.target.value)}
+            style={{
+              background: "#1e293b",
+              color: "#f8fafc",
+              border: "1px solid #334155",
+              borderRadius: 6,
+              padding: "5px 10px",
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            <option value="Original">Original Fonts</option>
+            <option value="Helvetica">Helvetica (Sans-Serif)</option>
+            <option value="Times Roman">Times New Roman (Serif)</option>
+            <option value="Courier">Courier New (Monospace)</option>
+          </select>
+        </div>
+      )}
+
       {hasDoc && (
         <button
           onClick={onSave}
@@ -119,7 +201,9 @@ function PropertiesPanel({
       <div style={{ padding: 20, color: "#64748b", fontSize: 13, textAlign: "center" }}>
         <div style={{ fontSize: 28, marginBottom: 8 }}>T</div>
         Click any text block to edit it,
-        <br />or use <b>Select Region</b> to drag a rectangle
+        <br />or use <b>Select Region</b> to drag a rectangle.
+        <br /><br />
+        <span style={{ fontSize: 11 }}>Use the floating toolbar above the selected block for text, font, size, and color edits.</span>
       </div>
     );
   }
@@ -129,187 +213,139 @@ function PropertiesPanel({
   return (
     <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
-        Text Properties
+        Block Info
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-        {["standard", "ai"].map(mode => (
+      {/* Block metadata (read-only summary) */}
+      <div style={{ background: "#1e293b", borderRadius: 8, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ fontSize: 11, color: "#94a3b8" }}>
+          <span style={{ fontWeight: 700 }}>Font:</span> {font_name}
+        </div>
+        <div style={{ fontSize: 11, color: "#94a3b8" }}>
+          <span style={{ fontWeight: 700 }}>Size:</span> {font_size?.toFixed(1)}pt
+        </div>
+        <div style={{ fontSize: 11, color: "#94a3b8", display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontWeight: 700 }}>Color:</span>
+          <div style={{ width: 14, height: 14, borderRadius: 3, background: color, border: "1px solid #475569" }} />
+          <span>{color}</span>
+        </div>
+        <div style={{ fontSize: 11, color: "#64748b", fontStyle: "italic", borderTop: "1px solid #334155", paddingTop: 8, marginTop: 4 }}>
+          ✎ Use the floating toolbar on the page to edit text, font, and styling.
+        </div>
+      </div>
+
+      <div style={{ width: "100%", height: 1, background: "#1e293b" }} />
+
+      <div style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+        AI Edit
+      </div>
+
+      {/* AI Edit controls */}
+      <label style={labelStyle}>
+        <span>AI Provider</span>
+        <select
+          value={aiEditProvider}
+          onChange={e => setAiEditProvider(e.target.value)}
+          style={inputStyle}
+        >
+          <option value="gemini">Gemini</option>
+          <option value="replicate">Replicate (InstructPix2Pix)</option>
+        </select>
+      </label>
+      <label style={labelStyle}>
+        <span>API Key</span>
+        <input
+          type="password"
+          value={aiEditApiKey}
+          onChange={e => setAiEditApiKey(e.target.value)}
+          placeholder="Stored locally in this browser"
+          style={inputStyle}
+        />
+      </label>
+
+      <label style={labelStyle}>
+        <span>Original Text</span>
+        <textarea
+          value={text}
+          readOnly
+          style={{ ...inputStyle, minHeight: 54, resize: "vertical", lineHeight: 1.4, color: "#94a3b8" }}
+        />
+      </label>
+
+      <label style={labelStyle}>
+        <span>Replacement Text</span>
+        <textarea
+          value={aiReplacementText}
+          onChange={e => setAiReplacementText(e.target.value)}
+          placeholder="Text AI should render into this region"
+          style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.4 }}
+        />
+      </label>
+
+      <button
+        onClick={onAiReplace}
+        disabled={aiLoading || !aiReplacementText.trim()}
+        style={{
+          background: aiLoading || !aiReplacementText.trim() ? "#334155" : "#10b981",
+          color: "#fff",
+          border: "none",
+          borderRadius: 6,
+          padding: "9px 12px",
+          cursor: aiLoading || !aiReplacementText.trim() ? "not-allowed" : "pointer",
+          fontWeight: 700,
+          fontSize: 13,
+        }}
+      >
+        {aiLoading ? "Preparing..." : "AI Replace"}
+      </button>
+
+      {aiError && (
+        <div style={{ background: "#450a0a", color: "#fca5a5", borderRadius: 6, padding: "8px 10px", fontSize: 12 }}>
+          {aiError}
+        </div>
+      )}
+
+      {aiMessage && (
+        <div style={{ background: "#052e16", color: "#86efac", borderRadius: 6, padding: "8px 10px", fontSize: 12 }}>
+          {aiMessage}
+        </div>
+      )}
+
+      {aiPreview && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
+            Crop Preview
+          </div>
+          <img
+            src={`data:image/png;base64,${aiPreview.crop_image_b64}`}
+            alt="AI edit crop preview"
+            style={{ width: "100%", background: "#fff", borderRadius: 4, border: "1px solid #334155" }}
+          />
           <button
-            key={mode}
-            onClick={() => setEditMode(mode)}
-            style={{
-              border: "1px solid #334155",
-              borderRadius: 6,
-              padding: "7px 8px",
-              background: editMode === mode ? "#6366f1" : "#1e293b",
-              color: "#f8fafc",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
+            onClick={() => {
+              onUpdate({
+                text: aiReplacementText,
+                crop_image_b64: aiPreview.crop_image_b64,
+                edit_id: aiPreview.edit_id,
+                is_ai_edit: true
+              });
             }}
-          >
-            {mode === "standard" ? "Standard" : "AI Edit"}
-          </button>
-        ))}
-      </div>
-
-      {editMode === "standard" ? (
-        <>
-          <label style={labelStyle}>
-            <span>Content</span>
-            <textarea
-              value={text}
-              onChange={e => onUpdate({ text: e.target.value })}
-              style={{ ...inputStyle, minHeight: 80, resize: "vertical", lineHeight: 1.5 }}
-            />
-          </label>
-
-          <label style={labelStyle}>
-            <span>Font Family</span>
-            <select
-              value={font_name}
-              onChange={e => onUpdate({ font_name: e.target.value })}
-              style={inputStyle}
-            >
-              {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </label>
-
-          <label style={labelStyle}>
-            <span>Font Size</span>
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <input
-                type="range" min={6} max={72} step={0.5}
-                value={font_size}
-                onChange={e => onUpdate({ font_size: parseFloat(e.target.value) })}
-                style={{ flex: 1 }}
-              />
-              <span style={{ color: "#f8fafc", width: 30, fontSize: 12 }}>{font_size}</span>
-            </div>
-          </label>
-
-          <label style={labelStyle}>
-            <span>Color</span>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <input
-                type="color"
-                value={color}
-                onChange={e => onUpdate({ color: e.target.value })}
-                style={{ width: 40, height: 32, border: "none", borderRadius: 4, cursor: "pointer", background: "none" }}
-              />
-              <span style={{ color: "#94a3b8", fontSize: 12 }}>{color}</span>
-            </div>
-          </label>
-        </>
-      ) : (
-        <>
-          <label style={labelStyle}>
-            <span>AI Provider</span>
-            <select
-              value={aiEditProvider}
-              onChange={e => setAiEditProvider(e.target.value)}
-              style={inputStyle}
-            >
-              <option value="gemini">Gemini</option>
-              <option value="replicate">Replicate (InstructPix2Pix)</option>
-            </select>
-          </label>
-          <label style={labelStyle}>
-            <span>API Key</span>
-            <input
-              type="password"
-              value={aiEditApiKey}
-              onChange={e => setAiEditApiKey(e.target.value)}
-              placeholder="Stored locally in this browser"
-              style={inputStyle}
-            />
-          </label>
-
-          <label style={labelStyle}>
-            <span>Original Text</span>
-            <textarea
-              value={text}
-              readOnly
-              style={{ ...inputStyle, minHeight: 54, resize: "vertical", lineHeight: 1.4, color: "#94a3b8" }}
-            />
-          </label>
-
-          <label style={labelStyle}>
-            <span>Replacement Text</span>
-            <textarea
-              value={aiReplacementText}
-              onChange={e => setAiReplacementText(e.target.value)}
-              placeholder="Text AI should render into this region"
-              style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.4 }}
-            />
-          </label>
-
-          <button
-            onClick={onAiReplace}
-            disabled={aiLoading || !aiReplacementText.trim()}
             style={{
-              background: aiLoading || !aiReplacementText.trim() ? "#334155" : "#10b981",
+              background: "#10b981",
               color: "#fff",
               border: "none",
               borderRadius: 6,
               padding: "9px 12px",
-              cursor: aiLoading || !aiReplacementText.trim() ? "not-allowed" : "pointer",
+              cursor: "pointer",
               fontWeight: 700,
               fontSize: 13,
+              marginTop: 4,
+              width: "100%",
             }}
           >
-            {aiLoading ? "Preparing..." : "AI Replace"}
+            Apply AI Edit
           </button>
-
-          {aiError && (
-            <div style={{ background: "#450a0a", color: "#fca5a5", borderRadius: 6, padding: "8px 10px", fontSize: 12 }}>
-              {aiError}
-            </div>
-          )}
-
-          {aiMessage && (
-            <div style={{ background: "#052e16", color: "#86efac", borderRadius: 6, padding: "8px 10px", fontSize: 12 }}>
-              {aiMessage}
-            </div>
-          )}
-
-          {aiPreview && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div style={{ color: "#94a3b8", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
-                Crop Preview
-              </div>
-              <img
-                src={`data:image/png;base64,${aiPreview.crop_image_b64}`}
-                alt="AI edit crop preview"
-                style={{ width: "100%", background: "#fff", borderRadius: 4, border: "1px solid #334155" }}
-              />
-              <button
-                onClick={() => {
-                  onUpdate({
-                    text: aiReplacementText,
-                    crop_image_b64: aiPreview.crop_image_b64,
-                    edit_id: aiPreview.edit_id,
-                    is_ai_edit: true
-                  });
-                }}
-                style={{
-                  background: "#10b981",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "9px 12px",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  marginTop: 4,
-                  width: "100%",
-                }}
-              >
-                Apply AI Edit
-              </button>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {selectedBlock.is_ocr && (
@@ -336,7 +372,7 @@ const inputStyle = {
 
 // ── PDF Page Canvas ───────────────────────────────────────────────────────────
 
-function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRectSelect, editedBlocks }) {
+function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRectSelect, editedBlocks, selectedBlock, onUpdateBlock, documentFont }) {
   const canvasRef = useRef(null);
   const [hoverId, setHoverId] = useState(null);
   const [dragStart, setDragStart] = useState(null);  // { x, y } in pixels relative to container
@@ -467,6 +503,64 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
     return "default";
   };
 
+  const activeSelectedBlock = blocks.find(b => selectedIds.has(b.id));
+  const hasSelectedBlock = selectedBlock && activeSelectedBlock && selectedBlock.id === activeSelectedBlock.id;
+  const isBold = activeSelectedBlock ? (activeSelectedBlock.font_name?.toLowerCase().includes("bold") || activeSelectedBlock.bold) : false;
+  const isItalic = activeSelectedBlock ? (
+    activeSelectedBlock.font_name?.toLowerCase().includes("italic") ||
+    activeSelectedBlock.font_name?.toLowerCase().includes("oblique") ||
+    activeSelectedBlock.italic
+  ) : false;
+
+  const toggleBold = () => {
+    if (!activeSelectedBlock) return;
+    let newFont = activeSelectedBlock.font_name || "Helvetica";
+    if (newFont.toLowerCase().includes("bold")) {
+      newFont = newFont.replace(" Bold", "").replace(" bold", "").replace("Bold", "");
+    } else {
+      if (newFont === "Helvetica") newFont = "Helvetica Bold";
+      else if (newFont === "Times Roman") newFont = "Times Bold";
+      else if (newFont === "Courier") newFont = "Courier Bold";
+      else newFont = newFont + " Bold";
+    }
+    onUpdateBlock({ font_name: newFont, bold: !isBold });
+  };
+
+  const toggleItalic = () => {
+    if (!activeSelectedBlock) return;
+    let newFont = activeSelectedBlock.font_name || "Helvetica";
+    if (newFont.toLowerCase().includes("italic")) {
+      newFont = newFont.replace(" Italic", "").replace(" italic", "").replace("Italic", "");
+    } else if (newFont.toLowerCase().includes("oblique")) {
+      newFont = newFont.replace(" Oblique", "").replace(" oblique", "").replace("Oblique", "");
+    } else {
+      if (newFont === "Helvetica") newFont = "Helvetica Oblique";
+      else if (newFont === "Times Roman") newFont = "Times Italic";
+      else newFont = newFont + " Italic";
+    }
+    onUpdateBlock({ font_name: newFont, italic: !isItalic });
+  };
+
+  let popTop = 0;
+  let popLeft = 0;
+  const popoverWidth = 420;
+  const popoverHeight = 135;
+
+  if (hasSelectedBlock) {
+    const blkLeft = activeSelectedBlock.x * totalScale;
+    const blkTop = activeSelectedBlock.y * totalScale;
+    const blkW = Math.max(activeSelectedBlock.width + 4, 8) * totalScale;
+    const blkH = Math.max(activeSelectedBlock.height, 10) * totalScale;
+
+    const showBelow = blkTop < popoverHeight;
+    popTop = showBelow ? (blkTop + blkH + 8) : (blkTop - popoverHeight - 8);
+    let targetLeft = blkLeft + (blkW - popoverWidth) / 2;
+    targetLeft = Math.max(blkLeft - 50, targetLeft);
+    popLeft = Math.max(8, Math.min(pw - popoverWidth - 8, targetLeft));
+  }
+
+  const showPopover = hasSelectedBlock && !dragStart;
+
   return (
     <div style={{
       position: "relative", width: pw, height: ph,
@@ -499,6 +593,16 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
         {blocks.map(block => {
           const isSelected = selectedIds.has(block.id);
           const isHovered = block.id === hoverId;
+          const showText = documentFont !== "Original" || editedBlocks[block.id];
+          const boxW = Math.max(block.width + 4, 8) * totalScale;
+          const fFamily = FONT_CSS_MAP[documentFont] || FONT_CSS_MAP[block.font_name] || "Helvetica";
+          const fWeight = (block.font_name?.toLowerCase().includes("bold") || block.bold) ? "bold" : "normal";
+          const fStyle = (block.font_name?.toLowerCase().includes("italic") || block.font_name?.toLowerCase().includes("oblique") || block.italic) ? "italic" : "normal";
+          const baseFontSize = block.font_size * totalScale;
+          // Auto-scale font to fit within the bounding box width
+          const displayFontSize = (showText && block.text && !block.text.includes('\n'))
+            ? fitFontSize(block.text, fFamily, baseFontSize, boxW - 4, fWeight, fStyle)
+            : baseFontSize;
 
           return (
             <div
@@ -507,19 +611,18 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                 position: "absolute",
                 left: block.x * totalScale,
                 top: block.y * totalScale,
-                width: Math.max(block.width + 4, 8) * totalScale,
+                width: boxW,
                 minWidth: 24,
                 height: Math.max(block.height, 10) * totalScale,
                 minHeight: 16,
-                // Only make text visible if it has been edited (and is not an AI edit)
-                color: editedBlocks[block.id]
-                  ? (editedBlocks[block.id].is_ai_edit ? "transparent" : block.color)
+                color: showText
+                  ? (block.is_ai_edit ? "transparent" : block.color)
                   : "transparent",
-                fontFamily: FONT_CSS_MAP[block.font_name] || "Helvetica",
-                fontWeight: block.font_name?.toLowerCase().includes("bold") ? "bold" : "normal",
-                fontStyle: (block.font_name?.toLowerCase().includes("italic") || block.font_name?.toLowerCase().includes("oblique")) ? "italic" : "normal",
-                fontSize: block.font_size * totalScale,
-                whiteSpace: "pre-wrap",
+                fontFamily: fFamily,
+                fontWeight: fWeight,
+                fontStyle: fStyle,
+                fontSize: displayFontSize,
+                whiteSpace: block.text?.includes("\n") ? "pre-wrap" : "nowrap",
                 lineHeight: 1.2,
                 pointerEvents: "auto",
                 cursor: activeTool === "edit" ? "text" : "pointer",
@@ -530,12 +633,10 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                     : "none",
                 outlineOffset: 1,
                 borderRadius: 2,
-                // If it's edited, give it its detected background color to cover the original image text
-                // If it's an AI edit, use the base64 crop image as background cover
-                background: editedBlocks[block.id]
-                  ? (editedBlocks[block.id].is_ai_edit
-                    ? `url(data:image/png;base64,${editedBlocks[block.id].crop_image_b64}) no-repeat center/cover`
-                    : editedBlocks[block.id].background_color || block.background_color || "#ffffff")
+                background: showText
+                  ? (block.is_ai_edit
+                    ? `url(data:image/png;base64,${block.crop_image_b64}) no-repeat center/cover`
+                    : block.background_color || "#ffffff")
                   : isSelected
                     ? "rgba(99,102,241,0.3)"
                     : isHovered
@@ -543,7 +644,7 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                       : "transparent",
                 boxSizing: "border-box",
                 transition: "outline 0.1s, background 0.1s",
-                padding: "0 2px", // padding so text doesn't hit the very edge
+                padding: "0 2px",
               }}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => {
@@ -554,7 +655,7 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
               onMouseEnter={() => { if (!dragStart) setHoverId(block.id); }}
               onMouseLeave={() => { if (!dragStart) setHoverId(null); }}
             >
-              {editedBlocks[block.id] ? block.text : null}
+              {showText ? block.text : null}
             </div>
           );
         })}
@@ -574,6 +675,168 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
           }} />
         )}
       </div>
+
+      {/* Floating inline editing toolbar */}
+      {showPopover && (
+        <div style={{
+          position: "absolute",
+          top: popTop,
+          left: popLeft,
+          width: popoverWidth,
+          background: "rgba(15, 23, 42, 0.95)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid #334155",
+          borderRadius: 8,
+          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.6), 0 8px 10px -6px rgba(0,0,0,0.6)",
+          padding: "10px 12px",
+          zIndex: 40,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          pointerEvents: "auto",
+        }}>
+          {/* Format toolbar row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <select
+              value={activeSelectedBlock.font_name || "Helvetica"}
+              onChange={e => onUpdateBlock({ font_name: e.target.value })}
+              style={{
+                background: "#1e293b", color: "#f8fafc", border: "1px solid #334155",
+                borderRadius: 4, padding: "3px 6px", fontSize: 11,
+              }}
+            >
+              {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+
+            <div style={{ display: "flex", alignItems: "center", background: "#1e293b", border: "1px solid #334155", borderRadius: 4 }}>
+              <button
+                onClick={() => onUpdateBlock({ font_size: Math.max(6, (activeSelectedBlock.font_size || 12) - 1) })}
+                style={{ background: "none", border: "none", color: "#f8fafc", padding: "3px 8px", cursor: "pointer", fontSize: 11 }}
+                title="Decrease font size"
+              >
+                A-
+              </button>
+              <span style={{ fontSize: 11, color: "#cbd5e1", minWidth: 20, textAlign: "center" }}>
+                {Math.round(activeSelectedBlock.font_size || 12)}
+              </span>
+              <button
+                onClick={() => onUpdateBlock({ font_size: Math.min(72, (activeSelectedBlock.font_size || 12) + 1) })}
+                style={{ background: "none", border: "none", color: "#f8fafc", padding: "3px 8px", cursor: "pointer", fontSize: 11 }}
+                title="Increase font size"
+              >
+                A+
+              </button>
+            </div>
+
+            <div style={{ width: 1, height: 16, background: "#334155" }} />
+
+            <button
+              onClick={toggleBold}
+              style={{
+                background: isBold ? "#6366f1" : "transparent",
+                color: "#fff",
+                border: "1px solid #334155",
+                borderRadius: 4,
+                width: 24, height: 24,
+                cursor: "pointer",
+                fontWeight: "bold",
+                fontSize: 11,
+              }}
+              title="Bold"
+            >
+              B
+            </button>
+
+            <button
+              onClick={toggleItalic}
+              style={{
+                background: isItalic ? "#6366f1" : "transparent",
+                color: "#fff",
+                border: "1px solid #334155",
+                borderRadius: 4,
+                width: 24, height: 24,
+                cursor: "pointer",
+                fontStyle: "italic",
+                fontSize: 11,
+              }}
+              title="Italic"
+            >
+              I
+            </button>
+
+            <div style={{ position: "relative", width: 24, height: 24 }}>
+              <input
+                type="color"
+                value={activeSelectedBlock.color || "#000000"}
+                onChange={e => onUpdateBlock({ color: e.target.value })}
+                style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                  border: "none", padding: 0, opacity: 0, cursor: "pointer",
+                }}
+              />
+              <div style={{
+                width: 20, height: 20, borderRadius: "50%",
+                background: activeSelectedBlock.color || "#000000",
+                border: "1px solid #475569",
+                margin: 2,
+              }} title="Text Color" />
+            </div>
+
+            <div style={{ position: "relative", width: 24, height: 24 }}>
+              <input
+                type="color"
+                value={activeSelectedBlock.background_color || "#ffffff"}
+                onChange={e => onUpdateBlock({ background_color: e.target.value })}
+                style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                  border: "none", padding: 0, opacity: 0, cursor: "pointer",
+                }}
+              />
+              <div style={{
+                width: 20, height: 20,
+                background: activeSelectedBlock.background_color || "#ffffff",
+                border: "1px solid #475569",
+                margin: 2,
+              }} title="Background Color (covers original text)" />
+            </div>
+
+            <div style={{ flex: 1 }} />
+
+            <button
+              onClick={() => onSelectBlock(null)}
+              style={{
+                background: "transparent", border: "none", color: "#94a3b8",
+                cursor: "pointer", fontSize: 14, fontWeight: "bold",
+              }}
+              title="Done"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div style={{ display: "flex", gap: 6 }}>
+            <textarea
+              value={activeSelectedBlock.text || ""}
+              onChange={e => onUpdateBlock({ text: e.target.value }, true)}
+              style={{
+                flex: 1,
+                background: "#1e293b",
+                color: "#f8fafc",
+                border: "1px solid #334155",
+                borderRadius: 4,
+                padding: "6px 8px",
+                fontSize: 12,
+                minHeight: 36,
+                maxHeight: 120,
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+              placeholder="Edit text content..."
+              autoFocus
+            />
+          </div>
+        </div>
+      )}
 
       {/* Page number badge */}
       <div style={{
@@ -935,7 +1198,11 @@ export default function App() {
   const [activeTool, setActiveTool] = useState("edit");
   const [selectedBlockIds, setSelectedBlockIds] = useState(new Set());
   const [editedBlocks, setEditedBlocks] = useState({});   // id -> partial overrides
-  const [scale, setScale] = useState(1.5);
+  const [scale, setScale] = useState(1.0);
+  const [documentFont, setDocumentFont] = useState("Original");
+  const [history, setHistory] = useState([{}]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const historyTimeoutRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [editMode, setEditMode] = useState("standard");
   const [aiEditProvider, setAiEditProvider] = useState("gemini"); // 'gemini' | 'nvidia'
@@ -1015,6 +1282,8 @@ export default function App() {
     setDocInfo(null);
     setSelectedBlockIds(new Set());
     setEditedBlocks({});
+    setHistory([{}]);
+    setHistoryIndex(0);
     setAiPreview(null);
     setAiError(null);
     setAiMessage(null);
@@ -1051,6 +1320,17 @@ export default function App() {
     if (block) {
       setSelectedBlockIds(new Set([block.id]));
       setAiReplacementText(block.text || "");
+      // Auto-switch to uniform font when user starts editing
+      if (documentFont === "Original") {
+        const fn = (block.font_name || "").toLowerCase();
+        if (fn.includes("times") || fn.includes("roman") || fn.includes("garamond") || fn.includes("serif")) {
+          setDocumentFont("Times Roman");
+        } else if (fn.includes("courier") || fn.includes("mono") || fn.includes("consolas")) {
+          setDocumentFont("Courier");
+        } else {
+          setDocumentFont("Helvetica");
+        }
+      }
     } else {
       setSelectedBlockIds(new Set());
       setAiReplacementText("");
@@ -1064,13 +1344,51 @@ export default function App() {
     setSelectedBlockIds(new Set(blocks.map(b => b.id)));
   };
 
-  const handleUpdateBlock = (updates) => {
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const nextIndex = historyIndex - 1;
+      setHistoryIndex(nextIndex);
+      setEditedBlocks(history[nextIndex]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextIndex = historyIndex + 1;
+      setHistoryIndex(nextIndex);
+      setEditedBlocks(history[nextIndex]);
+    }
+  };
+
+  const handleUpdateBlock = (updates, isTyping = false) => {
     if (selectedBlockIds.size === 0) return;
-    // Apply updates to all selected blocks
     setEditedBlocks(prev => {
       const next = { ...prev };
       for (const id of selectedBlockIds) {
         next[id] = { ...(prev[id] || {}), ...updates };
+      }
+      if (isTyping) {
+        if (historyTimeoutRef.current) {
+          clearTimeout(historyTimeoutRef.current);
+        }
+        historyTimeoutRef.current = setTimeout(() => {
+          setHistory(prevHist => {
+            const nextHist = prevHist.slice(0, historyIndex + 1);
+            nextHist.push(next);
+            setHistoryIndex(nextHist.length - 1);
+            return nextHist;
+          });
+        }, 800);
+      } else {
+        if (historyTimeoutRef.current) {
+          clearTimeout(historyTimeoutRef.current);
+        }
+        setHistory(prevHist => {
+          const nextHist = prevHist.slice(0, historyIndex + 1);
+          nextHist.push(next);
+          setHistoryIndex(nextHist.length - 1);
+          return nextHist;
+        });
       }
       return next;
     });
@@ -1126,18 +1444,31 @@ export default function App() {
     if (!docInfo) return;
     setSaving(true);
     try {
-      // Build edit list: only blocks that were actually changed
-      const edits = Object.entries(editedBlocks).map(([id, changes]) => {
-        // Find original block
-        let original = null;
+      let blocksToSave = [];
+      if (documentFont !== "Original") {
         for (const page of docInfo.pages) {
-          original = page.text_blocks.find(b => b.id === id);
-          if (original) break;
+          for (const block of page.text_blocks) {
+            const changes = editedBlocks[block.id] || {};
+            blocksToSave.push({ block, changes });
+          }
         }
-        if (!original) return null;
-        const merged = { ...original, ...changes };
+      } else {
+        for (const [id, changes] of Object.entries(editedBlocks)) {
+          let block = null;
+          for (const page of docInfo.pages) {
+            block = page.text_blocks.find(b => b.id === id);
+            if (block) break;
+          }
+          if (block) {
+            blocksToSave.push({ block, changes });
+          }
+        }
+      }
+
+      const edits = blocksToSave.map(({ block, changes }) => {
+        const merged = { ...block, ...changes };
         return {
-          block_id: id,
+          block_id: block.id,
           page: merged.page,
           text: merged.text,
           x: merged.x,
@@ -1152,13 +1483,20 @@ export default function App() {
           edit_id: merged.edit_id || null,
           baseline: merged.baseline ?? null,
           pdf_font: merged.pdf_font ?? null,
+          bold: merged.bold || false,
+          italic: merged.italic || false,
+          is_edited: !!editedBlocks[block.id],
         };
-      }).filter(Boolean);
+      });
 
       const res = await fetch(`${API}/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: docInfo.session_id, edits }),
+        body: JSON.stringify({
+          session_id: docInfo.session_id,
+          edits,
+          font_family: documentFont === "Original" ? null : documentFont
+        }),
       });
 
       if (!res.ok) throw new Error("Save failed");
@@ -1191,6 +1529,12 @@ export default function App() {
         onSave={handleSave}
         saving={saving}
         hasDoc={!!docInfo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        documentFont={documentFont}
+        setDocumentFont={setDocumentFont}
       />
 
       {docInfo && docInfo.is_scanned && scanEditMode === null && !loading && (
@@ -1372,6 +1716,9 @@ export default function App() {
                 onSelectBlock={handleSelectBlock}
                 onRectSelect={handleRectSelect}
                 editedBlocks={editedBlocks}
+                selectedBlock={selectedBlock}
+                onUpdateBlock={handleUpdateBlock}
+                documentFont={documentFont}
               />
             ))
           )}

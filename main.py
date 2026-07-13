@@ -102,11 +102,15 @@ class EditOperation(BaseModel):
     edit_id: Optional[str] = None
     baseline: Optional[float] = None
     pdf_font: Optional[str] = None
+    bold: Optional[bool] = False
+    italic: Optional[bool] = False
+    is_edited: Optional[bool] = False
 
 
 class SaveRequest(BaseModel):
     session_id: str
     edits: List[EditOperation]
+    font_family: Optional[str] = None
 
 
 class ReconstructRequest(BaseModel):
@@ -121,6 +125,7 @@ class ReconstructRequest(BaseModel):
 class ReconstructSaveRequest(BaseModel):
     session_id: str
     edits: dict  # element_id -> {text: ..., rows: [...], ...}
+    font_family: Optional[str] = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -466,9 +471,8 @@ class _FontRegistry:
 def _draw_edit_text(page: fitz.Page, edit: "EditOperation", registry: _FontRegistry) -> None:
     """Draw replacement text, preserving baseline and fitting it to the box.
 
-    A single line that is slightly too wide is shrunk to fit (down to 50%% of the
-    original size) rather than wrapping into the row below. Only genuinely long
-    or multi-line text falls back to a wrapped text box.
+    A single line that is slightly too wide is shrunk to fit (down to 30% of the
+    original size) rather than wrapping into the row below.
     """
     text = edit.text
     if not text.strip():
@@ -488,29 +492,29 @@ def _draw_edit_text(page: fitz.Page, edit: "EditOperation", registry: _FontRegis
 
     if single_line:
         draw_size = size
-        fits = True
-        try:
-            length = fitz.get_text_length(text, fontname=fontname, fontsize=draw_size)
-            if edit.width > 0 and length > edit.width + 1:
-                # Shrink to fit the original box, but not below 50%% of size.
-                floor = max(size * 0.5, 4.0)
-                while draw_size > floor:
-                    draw_size -= 0.5
-                    if fitz.get_text_length(text, fontname=fontname, fontsize=draw_size) <= edit.width + 1:
-                        break
+        # Only shrink font size for blocks that the user explicitly edited/typed.
+        # This keeps unedited text at its standard font size when a global font family change is applied.
+        if getattr(edit, "is_edited", False):
+            try:
                 length = fitz.get_text_length(text, fontname=fontname, fontsize=draw_size)
-            fits = length <= edit.width + 1
-        except Exception:
-            draw_size, fits = size, True  # custom font: assume it fits
+                if edit.width > 0 and length > edit.width + 1:
+                    # Shrink to fit the original box, but keep it legible (max 70% shrink, min 5pt).
+                    floor = max(size * 0.7, 5.0)
+                    while draw_size > floor:
+                        draw_size -= 0.25
+                        if fitz.get_text_length(text, fontname=fontname, fontsize=draw_size) <= edit.width + 1:
+                            break
+            except Exception:
+                draw_size = size  # custom font: assume it fits
 
-        if fits:
-            page.insert_text(
-                fitz.Point(edit.x, baseline), text,
-                fontname=fontname, fontsize=draw_size, color=color,
-            )
-            return
+        # Always use single-line insert for single-line text — never wrap.
+        page.insert_text(
+            fitz.Point(edit.x, baseline), text,
+            fontname=fontname, fontsize=draw_size, color=color,
+        )
+        return
 
-    # Wrap into a box that extends to the page bottom so text never clips.
+    # Multi-line: wrap into a box that extends to the page bottom so text never clips.
     box = fitz.Rect(edit.x, edit.y, edit.x + max(edit.width, size * 2), page.rect.height)
     rc = page.insert_textbox(box, text, fontname=fontname, fontsize=size, color=color, align=0)
     if rc < 0:
@@ -542,6 +546,22 @@ async def save_pdf(req: SaveRequest):
         for edit in req.edits:
             if edit.page < 0 or edit.page >= doc.page_count:
                 raise HTTPException(400, f"Invalid page index: {edit.page}")
+            if req.font_family:
+                font_base = req.font_family
+                is_bold = edit.bold or "bold" in (edit.font_name or "").lower()
+                is_italic = edit.italic or "italic" in (edit.font_name or "").lower() or "oblique" in (edit.font_name or "").lower()
+                new_font = font_base
+                if is_bold and is_italic:
+                    new_font += " Bold Italic"
+                elif is_bold:
+                    new_font += " Bold"
+                elif is_italic:
+                    if font_base == "Helvetica":
+                        new_font += " Oblique"
+                    else:
+                        new_font += " Italic"
+                edit.font_name = new_font
+                edit.pdf_font = None
             edits_by_page.setdefault(edit.page, []).append(edit)
 
         for page_num, page_edits in edits_by_page.items():
@@ -679,7 +699,7 @@ async def save_reconstructed(req: ReconstructSaveRequest):
 
     out_path = session_dir / "reconstructed.pdf"
     try:
-        await generate_pdf(edited_doc, out_path)
+        await generate_pdf(edited_doc, out_path, font_family=req.font_family)
     except Exception as e:
         # Previously this endpoint had no error handling, so any failure in
         # generate_pdf (missing Playwright/Chromium, missing markdown/mdx_math,
