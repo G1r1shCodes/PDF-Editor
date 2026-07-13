@@ -11,7 +11,7 @@
 
 A robust, offline-first web PDF editor that uses **MinerU** and **Vision-Language Models (VLMs)** to perfectly reconstruct scanned documents, complex tables, and LaTeX math formulas into editable formats.
 
-## 🚀 Key Features
+##  Key Features
 
 * **AI-Powered OCR**: Uses MinerU for state-of-the-art document layout detection.
 * **VLM Integration**: Seamlessly offloads complex tables and math formulas to NVIDIA NIM (Llama 3.2 90B Vision) for flawless Markdown/LaTeX extraction.
@@ -23,7 +23,7 @@ A robust, offline-first web PDF editor that uses **MinerU** and **Vision-Languag
 
 ---
 
-## 🏗 Architecture
+##  Architecture
 
 ```text
 Browser (React / Vite)
@@ -48,7 +48,7 @@ FastAPI Backend
 
 ---
 
-## 🛠️ Setup & Installation
+##  Setup & Installation
 
 ### 1. Prerequisites
 - **Python 3.10+**
@@ -63,7 +63,7 @@ We have provided a unified runner script in the workspace root:
 
 ---
 
-## ⚙️ Configuration & Hardware Notes
+##  Configuration & Hardware Notes
 
 ### CPU Fallback & PyTorch OOMs
 By default, the backend forces MinerU's layout engine to run entirely on the CPU to prevent Windows Page File (`WinError 1455`) and CUDA `Out of Memory` crashes on GPUs with <= 4GB VRAM.
@@ -75,7 +75,7 @@ env["CUDA_VISIBLE_DEVICES"] = "-1"
 
 ---
 
-## 📝 How it Works (Under the Hood)
+##  How it Works (Under the Hood)
 
 1. **Upload:** User uploads a scanned PDF.
 2. **Layout Detection:** MinerU scans the page (on local CPU) to detect text blocks, images, tables, and equations.
