@@ -44,6 +44,53 @@ function fitFontSize(text, fontFamily, baseFontSize, maxWidth, fontWeight = "nor
   }
 }
 
+// Convert hex color to rgba with custom opacity to make background semi-transparent
+function getRgbaColor(hex, opacity = 0.8) {
+  if (!hex || hex === "transparent") return "transparent";
+  if (hex.startsWith("#")) {
+    const cleanHex = hex.replace("#", "");
+    if (cleanHex.length === 3) {
+      const r = parseInt(cleanHex[0] + cleanHex[0], 16);
+      const g = parseInt(cleanHex[1] + cleanHex[1], 16);
+      const b = parseInt(cleanHex[2] + cleanHex[2], 16);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+    const r = parseInt(cleanHex.slice(0, 2), 16);
+    const g = parseInt(cleanHex.slice(2, 4), 16);
+    const b = parseInt(cleanHex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
+  return hex;
+}
+
+// Mirror of the backend's _ensure_readable_contrast: when text is redrawn in a
+// substitute font (global font change), very light colours that were only
+// legible thanks to a heavy original face are darkened just enough to read.
+function ensureReadableContrast(hex, bgHex, minDelta = 0.35) {
+  const parse = (h) => {
+    if (!h || !h.startsWith("#")) return [1, 1, 1];
+    const c = h.replace("#", "");
+    const full = c.length === 3 ? c.split("").map((ch) => ch + ch).join("") : c;
+    return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
+  };
+  const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+  const txt = parse(hex);
+  const bg = parse(bgHex || "#ffffff");
+  const tl = lum(txt), bl = lum(bg);
+  if (Math.abs(tl - bl) >= minDelta) return hex;
+  let out;
+  if (bl >= 0.5) {
+    if (tl <= 1e-6) return hex;
+    const scale = Math.max(bl - minDelta, 0) / tl;
+    out = txt.map((c) => Math.max(0, Math.min(1, c * scale)));
+  } else {
+    const target = Math.min(bl + minDelta, 1);
+    const blend = tl >= 1 ? 0 : Math.max(0, Math.min(1, (target - tl) / (1 - tl)));
+    out = txt.map((c) => c + (1 - c) * blend);
+  }
+  return "#" + out.map((c) => Math.round(c * 255).toString(16).padStart(2, "0")).join("");
+}
+
 // ── Components ────────────────────────────────────────────────────────────────
 
 function Spinner() {
@@ -594,7 +641,12 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
           const isSelected = selectedIds.has(block.id);
           const isHovered = block.id === hoverId;
           const showText = documentFont !== "Original" || editedBlocks[block.id];
-          const boxW = Math.max(block.width + 4, 8) * totalScale;
+          // When the box is an opaque cover over original text it must hug the
+          // exact bbox — any padding/minimum size makes it swallow nearby table
+          // borders. The roomier dimensions are only for invisible hit targets.
+          const boxW = showText
+            ? Math.max(block.width, 2) * totalScale
+            : Math.max(block.width + 4, 8) * totalScale;
           const fFamily = FONT_CSS_MAP[documentFont] || FONT_CSS_MAP[block.font_name] || "Helvetica";
           const fWeight = (block.font_name?.toLowerCase().includes("bold") || block.bold) ? "bold" : "normal";
           const fStyle = (block.font_name?.toLowerCase().includes("italic") || block.font_name?.toLowerCase().includes("oblique") || block.italic) ? "italic" : "normal";
@@ -612,11 +664,15 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                 left: block.x * totalScale,
                 top: block.y * totalScale,
                 width: boxW,
-                minWidth: 24,
-                height: Math.max(block.height, 10) * totalScale,
-                minHeight: 16,
+                minWidth: showText ? 0 : 24,
+                height: showText
+                  ? Math.max(block.height, 4) * totalScale
+                  : Math.max(block.height, 10) * totalScale,
+                minHeight: showText ? 0 : 16,
                 color: showText
-                  ? (block.is_ai_edit ? "transparent" : block.color)
+                  ? (block.is_ai_edit
+                    ? "transparent"
+                    : ensureReadableContrast(block.color, block.background_color))
                   : "transparent",
                 fontFamily: fFamily,
                 fontWeight: fWeight,
@@ -636,7 +692,7 @@ function PDFPage({ pageInfo, scale, activeTool, selectedIds, onSelectBlock, onRe
                 background: showText
                   ? (block.is_ai_edit
                     ? `url(data:image/png;base64,${block.crop_image_b64}) no-repeat center/cover`
-                    : block.background_color || "#ffffff")
+                    : getRgbaColor(block.background_color || "#ffffff", 1.0))
                   : isSelected
                     ? "rgba(99,102,241,0.3)"
                     : isHovered

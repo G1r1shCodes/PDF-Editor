@@ -391,6 +391,192 @@ def _strip_subset_prefix(name: str) -> str:
     return name
 
 
+# ── Ghost-free text erasing ─────────────────────────────────────────────────
+#
+# Instead of guessing how far a white box may safely expand before it hits a
+# table border (geometry guessing that fails whenever OCR coordinates are a
+# few pixels off, and that cannot see grid lines baked into a scanned image),
+# we erase at the PIXEL level:
+#   1. render the edit region from the pristine page,
+#   2. classify ink pixels: long straight runs = grid/table lines (kept),
+#      everything else = glyph ink (erased, including fuzzy antialiased edges),
+#   3. stamp the cleaned patch back over the region.
+# The patch can be as large as needed — lines inside it survive by definition,
+# so the old "bigger box eats the grid / smaller box leaves ghosts" trade-off
+# disappears.
+
+_GHOST_PAD_PTS = 3.0   # how far outside the reported bbox glyph ink may bleed
+_CLEAN_ZOOM = 4.0      # patch render scale (4x72 = 288 dpi)
+
+
+def _dilate_bool(mask, iterations: int):
+    """Cheap 4-connected binary dilation (no scipy/cv2 dependency)."""
+    m = mask
+    for _ in range(iterations):
+        out = m.copy()
+        out[1:, :] |= m[:-1, :]
+        out[:-1, :] |= m[1:, :]
+        out[:, 1:] |= m[:, :-1]
+        out[:, :-1] |= m[:, 1:]
+        m = out
+    return m
+
+
+def _mask_long_runs(ink, axis: int, min_len: int, edge_min: int = 12):
+    """Mask of ink pixels lying in straight line-like runs along an axis.
+
+    A run counts as a table border / rule (never a glyph stroke) if it is
+      - at least ``min_len`` long, OR
+      - touches the patch edge and is at least ``edge_min`` long. Borders that
+        only PARTIALLY cross the region enter/exit through an edge, while old
+        glyph ink sits strictly inside (the patch is padded beyond the text
+        bbox), so edge-touching runs are lines even when short relative to a
+        wide patch.
+    axis=1 finds horizontal lines, axis=0 vertical ones.
+    """
+    import numpy as np
+
+    work = ink if axis == 1 else ink.T
+    out = np.zeros_like(work)
+    n_cols = work.shape[1]
+    padded = np.zeros(n_cols + 2, dtype=np.int8)
+    for i in range(work.shape[0]):
+        row = work[i]
+        if not row.any():
+            continue
+        padded[1:-1] = row
+        diff = np.diff(padded)
+        starts = np.where(diff == 1)[0]
+        ends = np.where(diff == -1)[0]
+        for s, e in zip(starts, ends):
+            length = e - s
+            touches_edge = (s == 0) or (e == n_cols)
+            if length >= min_len or (touches_edge and length >= edge_min):
+                out[i, s:e] = True
+    return out if axis == 1 else out.T
+
+
+def _clean_text_region(page: fitz.Page, clip: fitz.Rect):
+    """Render *clip* and build an overlay that erases glyph ink only.
+
+    The overlay is TRANSPARENT everywhere except on detected glyph ink, so
+    grid/table lines are never repainted (repainting them raster-over-vector
+    caused faint doubled-line artifacts from sub-pixel rounding).
+
+    Returns one of:
+      ("skip", None, None)          – nothing visible to erase
+      ("fill", (r,g,b), rect)       – plain background; caller vector-fills rect
+      ("image", png_bytes, rect)    – stamp this RGBA overlay exactly onto rect
+      None                          – analysis failed; caller uses a fallback
+    """
+    try:
+        import numpy as np
+
+        pix = page.get_pixmap(
+            matrix=fitz.Matrix(_CLEAN_ZOOM, _CLEAN_ZOOM), clip=clip, alpha=False
+        )
+        if pix.width < 4 or pix.height < 4 or pix.n < 3:
+            return None
+        # get_pixmap rounds the clip to whole device pixels; stamp back onto
+        # that EXACT rounded rect or everything lands ~0.25pt off.
+        stamp_rect = fitz.Rect(
+            pix.x / _CLEAN_ZOOM, pix.y / _CLEAN_ZOOM,
+            (pix.x + pix.width) / _CLEAN_ZOOM, (pix.y + pix.height) / _CLEAN_ZOOM,
+        )
+        img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+            pix.height, pix.width, pix.n
+        )
+        img = np.ascontiguousarray(img[:, :, :3])
+        gray = img.astype(np.float32).mean(axis=2)
+        h, w = gray.shape
+
+        # Ink = anything that deviates meaningfully from the dominant
+        # background shade (catches dark text on light cells AND light text
+        # on coloured header cells).
+        bg_gray = float(np.median(gray))
+        ink = np.abs(gray - bg_gray) > 32.0
+
+        if not ink.any():
+            return ("skip", None, None)
+
+        # Background colour = median of clearly-background pixels.
+        bg_sample = img[~_dilate_bool(ink, 2)]
+        if bg_sample.size == 0:
+            return None
+        bg_col = np.median(bg_sample, axis=0)
+
+        # Straight runs spanning most of the patch are table/grid lines.
+        min_h_run = max(int(w * 0.7), 24)
+        min_v_run = max(int(h * 0.7), 24)
+        line_mask = _mask_long_runs(ink, 1, min_h_run) | _mask_long_runs(
+            ink, 0, min_v_run
+        )
+        # Protect the lines' antialiased fringe too.
+        keep = _dilate_bool(line_mask, 2)
+        # Erase glyph ink generously (dilated to swallow fuzzy edges) but
+        # never a pixel that belongs to a line.
+        remove = _dilate_bool(ink & ~keep, 3) & ~keep
+        if not remove.any():
+            return ("skip", None, None)
+
+        # Shortcut: plain uniform background with no lines → tiny vector fill
+        # instead of a raster stamp (crisper output, smaller file).
+        if not line_mask.any():
+            spread = float(bg_sample.std(axis=0).max())
+            if spread < 4.0:
+                return ("fill", tuple(float(c) / 255.0 for c in bg_col), stamp_rect)
+
+        # RGBA overlay: opaque background colour on erased ink, transparent
+        # everywhere else — lines and untouched pixels show through unchanged.
+        overlay = np.zeros((h, w, 4), dtype=np.uint8)
+        overlay[remove, :3] = bg_col.astype(np.uint8)
+        overlay[remove, 3] = 255
+
+        from PIL import Image
+
+        buf = io.BytesIO()
+        Image.fromarray(overlay, mode="RGBA").save(buf, format="PNG")
+        return ("image", buf.getvalue(), stamp_rect)
+    except Exception as e:
+        print(f"[WARN] _clean_text_region failed: {e}")
+        return None
+
+
+def _ensure_readable_contrast(color, background_hex, min_delta: float = 0.35):
+    """Nudge a text colour toward legible contrast with its background.
+
+    Needed when text is redrawn in a substitute font: e.g. a light-grey
+    heading that was only legible because the original used a heavy/outlined
+    face becomes invisible as thin Helvetica. Colours that already contrast
+    are returned unchanged.
+    """
+    def _lum(c):
+        return 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]
+
+    try:
+        bg = _hex_to_fitz_color(background_hex or "#ffffff")
+    except (TypeError, ValueError):
+        bg = (1.0, 1.0, 1.0)
+
+    tl, bl = _lum(color), _lum(bg)
+    if abs(tl - bl) >= min_delta:
+        return color
+
+    if bl >= 0.5:
+        # Light background → darken text just enough (keeps its hue).
+        target = max(bl - min_delta, 0.0)
+        if tl <= 1e-6:
+            return color
+        scale = target / tl
+        return tuple(max(0.0, min(1.0, c * scale)) for c in color)
+
+    # Dark background → blend text toward white.
+    target = min(bl + min_delta, 1.0)
+    blend = 0.0 if tl >= 1.0 else (target - tl) / (1.0 - tl)
+    blend = max(0.0, min(1.0, blend))
+    return tuple(c + (1.0 - c) * blend for c in color)
+
+
 class _FontRegistry:
     """Best-effort reuse of a PDF's own embedded fonts when redrawing edited text.
 
@@ -486,26 +672,37 @@ def _draw_edit_text(page: fitz.Page, edit: "EditOperation", registry: _FontRegis
     size = edit.font_size
     fallback = _clean_fontname(edit.font_name)
     fontname = registry.font_for(page, edit.pdf_font, text, fallback)
+
+    # When the original embedded font could NOT be reused (global font-family
+    # change, or a subset font missing glyphs), the substitute face may be far
+    # thinner than the original — e.g. a light-grey heading that was legible
+    # only because its original face was heavy/outlined turns near-invisible
+    # as thin Helvetica. Nudge such colours toward readable contrast.
+    if fontname == fallback:
+        color = _ensure_readable_contrast(color, edit.background_color)
+
     baseline = edit.baseline if edit.baseline is not None else edit.y + size
 
     single_line = "\n" not in text
 
     if single_line:
         draw_size = size
-        # Only shrink font size for blocks that the user explicitly edited/typed.
-        # This keeps unedited text at its standard font size when a global font family change is applied.
-        if getattr(edit, "is_edited", False):
-            try:
-                length = fitz.get_text_length(text, fontname=fontname, fontsize=draw_size)
-                if edit.width > 0 and length > edit.width + 1:
-                    # Shrink to fit the original box, but keep it legible (max 70% shrink, min 5pt).
-                    floor = max(size * 0.7, 5.0)
-                    while draw_size > floor:
-                        draw_size -= 0.25
-                        if fitz.get_text_length(text, fontname=fontname, fontsize=draw_size) <= edit.width + 1:
-                            break
-            except Exception:
-                draw_size = size  # custom font: assume it fits
+        # Fit the line to its original box width. This must apply to EVERY
+        # redrawn line, not just user-edited ones: substitute fonts (e.g. a
+        # global change to Helvetica) are often wider than the original face,
+        # so unedited lines redrawn at their original size overflow their
+        # table cells and even the page edge.
+        try:
+            length = fitz.get_text_length(text, fontname=fontname, fontsize=draw_size)
+            if edit.width > 0 and length > edit.width + 1:
+                # Shrink to fit the original box, but keep it legible (max 70% shrink, min 5pt).
+                floor = max(size * 0.7, 5.0)
+                while draw_size > floor:
+                    draw_size -= 0.25
+                    if fitz.get_text_length(text, fontname=fontname, fontsize=draw_size) <= edit.width + 1:
+                        break
+        except Exception:
+            draw_size = size  # custom font: assume it fits
 
         # Always use single-line insert for single-line text — never wrap.
         page.insert_text(
@@ -567,13 +764,48 @@ async def save_pdf(req: SaveRequest):
         for page_num, page_edits in edits_by_page.items():
             page = doc[page_num]
 
-            # Cover every original text region first, then apply all redactions in one
-            # pass; redaction deletes the underlying text/image from the content stream.
+            # Pass 1 — analyse each edit region on the PRISTINE page and build
+            # a cleaned background patch: glyph ink (plus its fuzzy antialiased
+            # edges) erased, grid/table lines preserved pixel-perfectly. The
+            # patch is padded beyond the reported bbox so misaligned OCR
+            # coordinates can no longer leave ghost edges behind.
+            patches = []  # aligned with page_edits: (exact_rect, clip, patch, bg_hex)
             for edit in page_edits:
-                rect = fitz.Rect(edit.x, edit.y, edit.x + edit.width, edit.y + edit.height)
-                bg_color = _hex_to_fitz_color(edit.background_color or "#ffffff")
-                page.add_redact_annot(rect, fill=bg_color)
-            page.apply_redactions()
+                r = fitz.Rect(edit.x, edit.y, edit.x + edit.width, edit.y + edit.height)
+                clip = fitz.Rect(
+                    r.x0 - _GHOST_PAD_PTS, r.y0 - _GHOST_PAD_PTS,
+                    r.x1 + _GHOST_PAD_PTS, r.y1 + _GHOST_PAD_PTS,
+                ) & page.rect
+                patch = _clean_text_region(page, clip) if not clip.is_empty else None
+                bg_hex = edit.background_color or "#ffffff"
+                patches.append((r, clip, patch, bg_hex))
+
+            # Pass 2 — delete the original text OBJECTS with transparent
+            # redactions over the exact bbox only (no fill, graphics kept), so
+            # neighbouring rows and vector lines are never touched.
+            for r, _clip, _patch, _bg in patches:
+                if not r.is_empty:
+                    page.add_redact_annot(r, fill=False)
+            # graphics=0: never delete vector lines. images=0: never blank
+            # image regions — grid lines baked into scans must survive; the
+            # transparent overlay erases the glyph ink instead.
+            page.apply_redactions(graphics=0, images=0)
+
+            # Pass 3 — paint the ink-erasing overlays. Each overlay is
+            # transparent except on erased glyph ink, so grid lines are never
+            # repainted and can't double up or get covered.
+            for r, clip, patch, bg_hex in patches:
+                if patch is None:
+                    # Analysis failed → conservative plain fill of the exact
+                    # bbox only (never the padded region).
+                    if not r.is_empty:
+                        page.draw_rect(r, color=None, fill=_hex_to_fitz_color(bg_hex))
+                elif patch[0] == "skip":
+                    pass  # nothing visible to erase in this region
+                elif patch[0] == "fill":
+                    page.draw_rect(patch[2], color=None, fill=patch[1])
+                else:
+                    page.insert_image(patch[2], stream=patch[1])
 
             # Draw replacement text or stamp edited crops
             for edit in page_edits:
