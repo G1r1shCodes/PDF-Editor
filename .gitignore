@@ -56,3 +56,6 @@ help.txt
 *_log.txt
 test_*.py
 tmp_out_test/
+
+# Portable Python
+python311/

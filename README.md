@@ -55,11 +55,17 @@ FastAPI Backend
 - **Node.js 18+**
 - **NVIDIA NIM API Key** (or Groq API key) for VLM mode.
 
-### 2. Quick Run (Single-Click)
+### 2. Quick Run (Standard Local Development)
 We have provided a unified runner script in the workspace root:
 - Double-click **`start.bat`**
-- It will automatically verify and install the required npm dependencies, and spin up both the **FastAPI Backend (port `8007`)** and **React/Vite Frontend (port `5173`)** concurrently in terminal windows.
+- It will automatically verify and install the required npm dependencies, check your global Python installation, and spin up both the **FastAPI Backend (port `8007`)** and **React/Vite Frontend (port `5173`)** concurrently.
 - Open **`http://localhost:5173`** in your browser.
+
+### 3. Portable Bundle (Zero-Install for sharing)
+If you want to share this application with someone who does not have Python or Node.js installed (or is running into version conflicts):
+1. Run **`setup_portable.ps1`** on your computer. This script downloads a standalone version of Python 3.11, installs all heavy ML dependencies (PyTorch, MinerU) inside the local folder, and pre-builds the React frontend.
+2. Zip up your entire project folder and send it.
+3. The recipient simply double-clicks **`start_portable.bat`** to run the app using the bundled Python. No installation required on their end!
 
 ---
 
